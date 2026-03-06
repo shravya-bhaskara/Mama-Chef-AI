@@ -9,7 +9,22 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Loader2, Plus, X, Search, Utensils, Info, History } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  X,
+  Search,
+  Utensils,
+  Info,
+  History,
+  Calendar,
+  ShieldPlus,
+  Sparkles,
+  Timer,
+  ShoppingBag,
+  Bot,
+  Crown,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -83,6 +98,58 @@ export default function Home() {
   const onSubmit = (data: CreateRecipeRequest) => {
     mutation.mutate(data);
   };
+
+  const planningSections = [
+    {
+      title: "Weekly AI Meal Planner",
+      description:
+        "Build a 7-day plan for breakfast, lunch, dinner, and snacks based on your family size, pantry ingredients, and preferred cuisine.",
+      icon: Calendar,
+      highlight: "Free first month · then premium",
+      points: [
+        "Auto-generates weekly schedule with prep-friendly meal flow",
+        "Adapts to leftovers to reduce food waste",
+        "Creates a smart grocery add-on list",
+      ],
+    },
+    {
+      title: "Weekly AI Health Meal Plan",
+      description:
+        "Get weekly plans designed for calorie balance, protein goals, vitamins, and probiotic-rich foods essential for healthy nutrition.",
+      icon: ShieldPlus,
+      highlight: "Free first month · then premium",
+      points: [
+        "Daily nutrition targets for calories and protein",
+        "Vitamin-forward suggestions with fruit/veg rotation",
+        "Gut-friendly probiotic ideas through the week",
+      ],
+    },
+  ];
+
+  const premiumPacks = [
+    "No-fuss lunchbox packs with home-available ingredients",
+    "Batch-cook friendly family boxes for weekdays",
+    "Regional lunchbox twists (Indian, Mediterranean, Asian, and more)",
+  ];
+
+  const festivalFeatures = [
+    "Festival recommendations by region, cuisine, and cultural traditions",
+    "Learns from your past cooking choices to personalize holiday menus",
+    "Suggests beginner, family-style, and celebration-size options",
+  ];
+
+  const agentFeatures = [
+    "Planner Agent: creates weekly schedules",
+    "Nutrition Agent: monitors calorie, protein, vitamin, and probiotic goals",
+    "Budget Agent: optimizes for pantry-first and low-cost substitutions",
+  ];
+
+  const rescueIdeas = [
+    "15-minute chickpea masala wrap",
+    "One-pan garlic egg fried rice",
+    "Greek yogurt veggie toast with seeds",
+    "Microwave sweet potato protein bowl",
+  ];
 
   return (
     <div className="min-h-screen bg-[#FFFDF5] pb-12">
@@ -238,6 +305,119 @@ export default function Home() {
             </Form>
           </CardContent>
         </Card>
+
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-orange-500" />
+            <h2 className="text-2xl font-display font-bold text-gray-800">New AI Planning Features</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {planningSections.map((section) => (
+              <Card key={section.title} className="border-orange-100 bg-white">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-lg text-gray-900">{section.title}</CardTitle>
+                      <CardDescription className="mt-2">{section.description}</CardDescription>
+                    </div>
+                    <section.icon className="h-5 w-5 text-orange-500 shrink-0" />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100">{section.highlight}</Badge>
+                  <ul className="space-y-2 text-sm text-gray-700">
+                    {section.points.map((point) => (
+                      <li key={point} className="flex gap-2">
+                        <span className="text-orange-500">•</span>
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid md:grid-cols-2 gap-4">
+          <Card className="border-orange-100 bg-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-gray-900">Recipe Packs for Subscribers</CardTitle>
+                <Crown className="h-5 w-5 text-amber-500" />
+              </div>
+              <CardDescription>
+                Premium users can unlock curated recipe packs focused on simple lunchbox recipes using ingredients usually available at home.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Paid / subscribed users</Badge>
+              {premiumPacks.map((pack) => (
+                <p key={pack} className="text-sm text-gray-700 flex gap-2">
+                  <ShoppingBag className="h-4 w-4 text-orange-500 mt-0.5" />
+                  <span>{pack}</span>
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-100 bg-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-gray-900">Festival & Cultural Cooking</CardTitle>
+                <Sparkles className="h-5 w-5 text-pink-500" />
+              </div>
+              <CardDescription>
+                Discover recipes for festivals with recommendations tuned by cuisine, region, culture, and your past usage patterns.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {festivalFeatures.map((feature) => (
+                <p key={feature} className="text-sm text-gray-700 flex gap-2">
+                  <span className="text-pink-500">✦</span>
+                  <span>{feature}</span>
+                </p>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-100 bg-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-gray-900">AI Agents Orchestration</CardTitle>
+                <Bot className="h-5 w-5 text-indigo-500" />
+              </div>
+              <CardDescription>
+                Multi-agent planning keeps tasks efficient by splitting planning, nutrition, and budget responsibilities.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {agentFeatures.map((feature) => (
+                <p key={feature} className="text-sm text-gray-700">• {feature}</p>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-100 bg-white">
+            <CardHeader>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-lg text-gray-900">5-Minute Dinner Rescue</CardTitle>
+                <Timer className="h-5 w-5 text-rose-500" />
+              </div>
+              <CardDescription>
+                A dedicated section for emergency quick dinners when you need something fast and reliable.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-2">
+              {rescueIdeas.map((idea) => (
+                <Badge key={idea} variant="outline" className="justify-start py-2 px-3 bg-rose-50/40 border-rose-100 text-gray-700">
+                  {idea}
+                </Badge>
+              ))}
+            </CardContent>
+          </Card>
+        </section>
 
         <AnimatePresence>
           {mutation.data && (
