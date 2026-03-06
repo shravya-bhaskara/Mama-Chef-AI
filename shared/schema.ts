@@ -1,18 +1,37 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const recipes = pgTable("recipes", {
+  id: serial("id").primaryKey(),
+  ingredients: text("ingredients").array().notNull(),
+  preferences: jsonb("preferences").notNull(),
+  suggestions: jsonb("suggestions").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertRecipeSchema = createInsertSchema(recipes).pick({
+  ingredients: true,
+  preferences: true,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type InsertRecipe = z.infer<typeof insertRecipeSchema>;
+export type Recipe = typeof recipes.$inferSelect;
+
+export type RecipeSuggestion = {
+  name: string;
+  description: string;
+  ingredientsUsed: string[];
+  nutritionalInfo: string;
+  recipeSearchQuery: string;
+};
+
+export type RecipeGenerationRequest = {
+  ingredients: string[];
+  preferences: {
+    cuisine?: string;
+    familySize?: string;
+    culture?: string;
+    dietaryRestrictions?: string;
+  };
+};
