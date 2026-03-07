@@ -47,6 +47,78 @@ export const api = {
       },
     },
   },
+  mealPlans: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/meal-plans' as const,
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/meal-plans' as const,
+      input: z.object({
+        planType: z.enum(['weekly', 'health']),
+        preferences: z.object({
+          familySize: z.string().optional(),
+          cuisine: z.string().optional(),
+          dietaryRestrictions: z.string().optional(),
+          calorieGoal: z.number().optional(),
+          proteinGoal: z.number().optional(),
+        }),
+      }),
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+        500: errorSchemas.internal,
+      },
+    },
+  },
+  quickMeals: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/quick-meals' as const,
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/quick-meals' as const,
+      input: z.object({
+        ingredients: z.array(z.string()),
+      }),
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+        500: errorSchemas.internal,
+      },
+    },
+  },
+  festivalRecipes: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/festival-recipes' as const,
+      responses: {
+        200: z.array(z.any()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/festival-recipes' as const,
+      input: z.object({
+        festival: z.string(),
+        region: z.string().optional(),
+        culture: z.string().optional(),
+      }),
+      responses: {
+        201: z.any(),
+        400: errorSchemas.validation,
+        500: errorSchemas.internal,
+      },
+    },
+  },
 };
 
 export function buildUrl(path: string, params?: Record<string, string | number>): string {
