@@ -311,33 +311,35 @@ export default function Home() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-orange-500" />
-            <h2 className="text-2xl font-display font-bold text-gray-800">New AI Planning Features</h2>
+            <h2 className="text-2xl font-display font-bold text-gray-800">AI Planning Features</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             {planningSections.map((section) => (
-              <Card key={section.title} className="border-orange-100 bg-white">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-lg text-gray-900">{section.title}</CardTitle>
-                      <CardDescription className="mt-2">{section.description}</CardDescription>
+              <Link key={section.title} href="/meal-planner">
+                <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-lg text-gray-900">{section.title}</CardTitle>
+                        <CardDescription className="mt-2">{section.description}</CardDescription>
+                      </div>
+                      <section.icon className="h-5 w-5 text-orange-500 shrink-0" />
                     </div>
-                    <section.icon className="h-5 w-5 text-orange-500 shrink-0" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100">{section.highlight}</Badge>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {section.points.map((point) => (
-                      <li key={point} className="flex gap-2">
-                        <span className="text-orange-500">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100">{section.highlight}</Badge>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {section.points.map((point) => (
+                        <li key={point} className="flex gap-2">
+                          <span className="text-orange-500">•</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>
