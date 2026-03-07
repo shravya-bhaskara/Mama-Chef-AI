@@ -356,7 +356,7 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Paid / subscribed users</Badge>
+              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Coming Soon</Badge>
               {premiumPacks.map((pack) => (
                 <p key={pack} className="text-sm text-gray-700 flex gap-2">
                   <ShoppingBag className="h-4 w-4 text-orange-500 mt-0.5" />
@@ -366,25 +366,27 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-100 bg-white">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-gray-900">Festival & Cultural Cooking</CardTitle>
-                <Sparkles className="h-5 w-5 text-pink-500" />
-              </div>
-              <CardDescription>
-                Discover recipes for festivals with recommendations tuned by cuisine, region, culture, and your past usage patterns.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {festivalFeatures.map((feature) => (
-                <p key={feature} className="text-sm text-gray-700 flex gap-2">
-                  <span className="text-pink-500">✦</span>
-                  <span>{feature}</span>
-                </p>
-              ))}
-            </CardContent>
-          </Card>
+          <Link href="/festival-recipes">
+            <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-gray-900">Festival & Cultural Recipes</CardTitle>
+                  <Sparkles className="h-5 w-5 text-pink-500" />
+                </div>
+                <CardDescription>
+                  Discover recipes for festivals with recommendations tuned by cuisine, region, culture, and your past usage patterns.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {festivalFeatures.map((feature) => (
+                  <p key={feature} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-pink-500">✦</span>
+                    <span>{feature}</span>
+                  </p>
+                ))}
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card className="border-orange-100 bg-white">
             <CardHeader>
@@ -403,24 +405,26 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-100 bg-white">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-gray-900">5-Minute Dinner Rescue</CardTitle>
-                <Timer className="h-5 w-5 text-rose-500" />
-              </div>
-              <CardDescription>
-                A dedicated section for emergency quick dinners when you need something fast and reliable.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-2">
-              {rescueIdeas.map((idea) => (
-                <Badge key={idea} variant="outline" className="justify-start py-2 px-3 bg-rose-50/40 border-rose-100 text-gray-700">
-                  {idea}
-                </Badge>
-              ))}
-            </CardContent>
-          </Card>
+          <Link href="/quick-meals">
+            <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-gray-900">5-Minute Dinner Rescue</CardTitle>
+                  <Timer className="h-5 w-5 text-rose-500" />
+                </div>
+                <CardDescription>
+                  A dedicated section for emergency quick dinners when you need something fast and reliable.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 gap-2">
+                {rescueIdeas.map((idea) => (
+                  <Badge key={idea} variant="outline" className="justify-start py-2 px-3 bg-rose-50/40 border-rose-100 text-gray-700">
+                    {idea}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+          </Link>
         </section>
 
         <AnimatePresence>
