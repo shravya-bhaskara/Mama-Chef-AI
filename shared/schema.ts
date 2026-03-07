@@ -24,6 +24,8 @@ export type RecipeSuggestion = {
   ingredientsUsed: string[];
   nutritionalInfo: string;
   recipeSearchQuery: string;
+  videoUrl?: string;
+  blogUrl?: string;
 };
 
 export type RecipeGenerationRequest = {
