@@ -24,6 +24,8 @@ import {
   ShoppingBag,
   Bot,
   Crown,
+  Youtube,
+  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
