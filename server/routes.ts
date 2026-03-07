@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
+import { searchYouTubeRecipe, searchCookingBlog } from "./recipeSearch";
 
 // the openai instance uses process.env.AI_INTEGRATIONS_OPENAI_API_KEY inside the replit environment
 const openai = new OpenAI({
