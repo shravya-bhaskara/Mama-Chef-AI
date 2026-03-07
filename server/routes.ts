@@ -78,10 +78,26 @@ Respond in JSON format with the following structure:
 
       const generatedData = JSON.parse(responseContent);
 
+      // Fetch YouTube videos and blog URLs for each suggestion
+      const suggestionsWithLinks = await Promise.all(
+        generatedData.suggestions.map(async (suggestion: any) => {
+          const [videoUrl, blogUrl] = await Promise.all([
+            searchYouTubeRecipe(suggestion.recipeSearchQuery),
+            searchCookingBlog(suggestion.recipeSearchQuery),
+          ]);
+
+          return {
+            ...suggestion,
+            videoUrl: videoUrl || undefined,
+            blogUrl: blogUrl || undefined,
+          };
+        })
+      );
+
       const newRecipe = await storage.createRecipe({
         ingredients: input.ingredients,
         preferences: input.preferences,
-        suggestions: generatedData.suggestions,
+        suggestions: suggestionsWithLinks,
       });
 
       res.status(201).json(newRecipe);
