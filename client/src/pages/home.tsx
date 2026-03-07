@@ -437,14 +437,38 @@ export default function Home() {
                         <h3 className="text-xl font-bold text-gray-900">{suggestion.name}</h3>
                         <p className="text-gray-600 mt-1">{suggestion.description}</p>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50 shrink-0 gap-2"
-                        onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
-                      >
-                        <Search className="h-4 w-4" />
-                        Find Recipe
-                      </Button>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        {suggestion.videoUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-red-200 text-red-600 hover:bg-red-50 gap-2"
+                            onClick={() => window.open(suggestion.videoUrl, "_blank")}
+                          >
+                            <Youtube className="h-4 w-4" />
+                            Watch Video
+                          </Button>
+                        )}
+                        {suggestion.blogUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
+                            onClick={() => window.open(suggestion.blogUrl, "_blank")}
+                          >
+                            <BookOpen className="h-4 w-4" />
+                            Read Recipe
+                          </Button>
+                        )}
+                        {!suggestion.videoUrl && !suggestion.blogUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2"
+                            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
+                          >
+                            <Search className="h-4 w-4" />
+                            Find Recipe
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="space-y-3">
