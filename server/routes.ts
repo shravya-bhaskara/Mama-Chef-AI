@@ -66,7 +66,7 @@ Respond in JSON format with the following structure:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5.1",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -210,7 +210,7 @@ Respond in JSON format with this structure:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5.1",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -290,7 +290,7 @@ Respond in JSON format:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5.1",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -379,7 +379,7 @@ Respond in JSON format:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5.1",
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
