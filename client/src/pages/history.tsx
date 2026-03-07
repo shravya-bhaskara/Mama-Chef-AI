@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Recipe } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Utensils, Info, ChevronLeft, Calendar } from "lucide-react";
+import { Search, Utensils, Info, ChevronLeft, Calendar, Youtube, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
