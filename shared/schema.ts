@@ -24,6 +24,8 @@ export type RecipeSuggestion = {
   ingredientsUsed: string[];
   nutritionalInfo: string;
   recipeSearchQuery: string;
+  videoUrl?: string;
+  blogUrl?: string;
 };
 
 export type RecipeGenerationRequest = {
@@ -35,3 +37,36 @@ export type RecipeGenerationRequest = {
     dietaryRestrictions?: string;
   };
 };
+
+// Meal Plans Table
+export const mealPlans = pgTable("meal_plans", {
+  id: serial("id").primaryKey(),
+  planType: text("plan_type").notNull(), // 'weekly' or 'health'
+  preferences: jsonb("preferences").notNull(),
+  meals: jsonb("meals").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type MealPlan = typeof mealPlans.$inferSelect;
+
+// Quick Meals Table
+export const quickMeals = pgTable("quick_meals", {
+  id: serial("id").primaryKey(),
+  ingredients: text("ingredients").array().notNull(),
+  meals: jsonb("meals").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type QuickMeal = typeof quickMeals.$inferSelect;
+
+// Festival Recipes Table
+export const festivalRecipes = pgTable("festival_recipes", {
+  id: serial("id").primaryKey(),
+  festival: text("festival").notNull(),
+  region: text("region"),
+  culture: text("culture"),
+  recipes: jsonb("recipes").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type FestivalRecipe = typeof festivalRecipes.$inferSelect;

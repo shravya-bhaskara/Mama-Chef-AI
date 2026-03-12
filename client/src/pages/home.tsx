@@ -24,6 +24,8 @@ import {
   ShoppingBag,
   Bot,
   Crown,
+  Youtube,
+  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -309,33 +311,35 @@ export default function Home() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-orange-500" />
-            <h2 className="text-2xl font-display font-bold text-gray-800">New AI Planning Features</h2>
+            <h2 className="text-2xl font-display font-bold text-gray-800">AI Planning Features</h2>
           </div>
 
           <div className="grid md:grid-cols-2 gap-4">
             {planningSections.map((section) => (
-              <Card key={section.title} className="border-orange-100 bg-white">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle className="text-lg text-gray-900">{section.title}</CardTitle>
-                      <CardDescription className="mt-2">{section.description}</CardDescription>
+              <Link key={section.title} href="/meal-planner">
+                <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <CardTitle className="text-lg text-gray-900">{section.title}</CardTitle>
+                        <CardDescription className="mt-2">{section.description}</CardDescription>
+                      </div>
+                      <section.icon className="h-5 w-5 text-orange-500 shrink-0" />
                     </div>
-                    <section.icon className="h-5 w-5 text-orange-500 shrink-0" />
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100">{section.highlight}</Badge>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {section.points.map((point) => (
-                      <li key={point} className="flex gap-2">
-                        <span className="text-orange-500">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-100">{section.highlight}</Badge>
+                    <ul className="space-y-2 text-sm text-gray-700">
+                      {section.points.map((point) => (
+                        <li key={point} className="flex gap-2">
+                          <span className="text-orange-500">•</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>
@@ -352,7 +356,7 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Paid / subscribed users</Badge>
+              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Coming Soon</Badge>
               {premiumPacks.map((pack) => (
                 <p key={pack} className="text-sm text-gray-700 flex gap-2">
                   <ShoppingBag className="h-4 w-4 text-orange-500 mt-0.5" />
@@ -362,25 +366,27 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-100 bg-white">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-gray-900">Festival & Cultural Cooking</CardTitle>
-                <Sparkles className="h-5 w-5 text-pink-500" />
-              </div>
-              <CardDescription>
-                Discover recipes for festivals with recommendations tuned by cuisine, region, culture, and your past usage patterns.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {festivalFeatures.map((feature) => (
-                <p key={feature} className="text-sm text-gray-700 flex gap-2">
-                  <span className="text-pink-500">✦</span>
-                  <span>{feature}</span>
-                </p>
-              ))}
-            </CardContent>
-          </Card>
+          <Link href="/festival-recipes">
+            <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-gray-900">Festival & Cultural Recipes</CardTitle>
+                  <Sparkles className="h-5 w-5 text-pink-500" />
+                </div>
+                <CardDescription>
+                  Discover recipes for festivals with recommendations tuned by cuisine, region, culture, and your past usage patterns.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {festivalFeatures.map((feature) => (
+                  <p key={feature} className="text-sm text-gray-700 flex gap-2">
+                    <span className="text-pink-500">✦</span>
+                    <span>{feature}</span>
+                  </p>
+                ))}
+              </CardContent>
+            </Card>
+          </Link>
 
           <Card className="border-orange-100 bg-white">
             <CardHeader>
@@ -399,24 +405,26 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-100 bg-white">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-gray-900">5-Minute Dinner Rescue</CardTitle>
-                <Timer className="h-5 w-5 text-rose-500" />
-              </div>
-              <CardDescription>
-                A dedicated section for emergency quick dinners when you need something fast and reliable.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-2">
-              {rescueIdeas.map((idea) => (
-                <Badge key={idea} variant="outline" className="justify-start py-2 px-3 bg-rose-50/40 border-rose-100 text-gray-700">
-                  {idea}
-                </Badge>
-              ))}
-            </CardContent>
-          </Card>
+          <Link href="/quick-meals">
+            <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-gray-900">5-Minute Dinner Rescue</CardTitle>
+                  <Timer className="h-5 w-5 text-rose-500" />
+                </div>
+                <CardDescription>
+                  A dedicated section for emergency quick dinners when you need something fast and reliable.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 gap-2">
+                {rescueIdeas.map((idea) => (
+                  <Badge key={idea} variant="outline" className="justify-start py-2 px-3 bg-rose-50/40 border-rose-100 text-gray-700">
+                    {idea}
+                  </Badge>
+                ))}
+              </CardContent>
+            </Card>
+          </Link>
         </section>
 
         <AnimatePresence>
@@ -435,14 +443,38 @@ export default function Home() {
                         <h3 className="text-xl font-bold text-gray-900">{suggestion.name}</h3>
                         <p className="text-gray-600 mt-1">{suggestion.description}</p>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="border-orange-200 text-orange-600 hover:bg-orange-50 shrink-0 gap-2"
-                        onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
-                      >
-                        <Search className="h-4 w-4" />
-                        Find Recipe
-                      </Button>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        {suggestion.videoUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-red-200 text-red-600 hover:bg-red-50 gap-2"
+                            onClick={() => window.open(suggestion.videoUrl, "_blank")}
+                          >
+                            <Youtube className="h-4 w-4" />
+                            Watch Video
+                          </Button>
+                        )}
+                        {suggestion.blogUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
+                            onClick={() => window.open(suggestion.blogUrl, "_blank")}
+                          >
+                            <BookOpen className="h-4 w-4" />
+                            Read Recipe
+                          </Button>
+                        )}
+                        {!suggestion.videoUrl && !suggestion.blogUrl && (
+                          <Button
+                            variant="outline"
+                            className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2"
+                            onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
+                          >
+                            <Search className="h-4 w-4" />
+                            Find Recipe
+                          </Button>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="space-y-3">

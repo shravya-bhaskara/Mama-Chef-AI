@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type Recipe } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Search, Utensils, Info, ChevronLeft, Calendar } from "lucide-react";
+import { Search, Utensils, Info, ChevronLeft, Calendar, Youtube, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
@@ -88,15 +88,41 @@ export default function History() {
                               <h3 className="text-lg font-bold text-gray-900">{suggestion.name}</h3>
                               <p className="text-sm text-gray-600 mt-1">{suggestion.description}</p>
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="border-orange-200 text-orange-600 hover:bg-orange-50 shrink-0 gap-2"
-                              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
-                            >
-                              <Search className="h-3 w-3" />
-                              Find Recipe
-                            </Button>
+                            <div className="flex flex-col gap-2 shrink-0">
+                              {suggestion.videoUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-red-200 text-red-600 hover:bg-red-50 gap-2"
+                                  onClick={() => window.open(suggestion.videoUrl, "_blank")}
+                                >
+                                  <Youtube className="h-3 w-3" />
+                                  Watch Video
+                                </Button>
+                              )}
+                              {suggestion.blogUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
+                                  onClick={() => window.open(suggestion.blogUrl, "_blank")}
+                                >
+                                  <BookOpen className="h-3 w-3" />
+                                  Read Recipe
+                                </Button>
+                              )}
+                              {!suggestion.videoUrl && !suggestion.blogUrl && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2"
+                                  onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
+                                >
+                                  <Search className="h-3 w-3" />
+                                  Find Recipe
+                                </Button>
+                              )}
+                            </div>
                           </div>
                           
                           <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100">
