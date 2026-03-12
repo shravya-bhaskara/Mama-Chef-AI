@@ -6,11 +6,21 @@ import { z } from "zod";
 import OpenAI from "openai";
 import { searchYouTubeRecipe, searchCookingBlog } from "./recipeSearch";
 
-// the openai instance uses process.env.AI_INTEGRATIONS_OPENAI_API_KEY inside the replit environment
-const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+const openAiApiKey =
+  process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+
+const openAiBaseUrl =
+  process.env.AI_INTEGRATIONS_OPENAI_BASE_URL || process.env.OPENAI_BASE_URL;
+
+const openAiModel =
+  process.env.AI_INTEGRATIONS_OPENAI_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
+
+const openai = openAiApiKey
+  ? new OpenAI({
+      apiKey: openAiApiKey,
+      ...(openAiBaseUrl ? { baseURL: openAiBaseUrl } : {}),
+    })
+  : null;
 
 export async function registerRoutes(
   httpServer: Server,
@@ -40,6 +50,13 @@ export async function registerRoutes(
 
   app.post(api.recipes.create.path, async (req, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({
+          message:
+            "Recipe generation is not configured. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY.",
+        });
+      }
+
       const input = api.recipes.create.input.parse(req.body);
       
       const prompt = `You are an expert culinary assistant designed to help mothers worldwide figure out what to cook.
@@ -66,7 +83,7 @@ Respond in JSON format with the following structure:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: openAiModel,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -125,6 +142,13 @@ Respond in JSON format with the following structure:
 
   app.post(api.mealPlans.create.path, async (req, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({
+          message:
+            "Meal plan generation is not configured. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY.",
+        });
+      }
+
       const input = api.mealPlans.create.input.parse(req.body);
       
       const prompt = input.planType === 'weekly' 
@@ -210,7 +234,7 @@ Respond in JSON format with this structure:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: openAiModel,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -253,6 +277,13 @@ Respond in JSON format with this structure:
 
   app.post(api.quickMeals.create.path, async (req, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({
+          message:
+            "Quick meal generation is not configured. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY.",
+        });
+      }
+
       const input = api.quickMeals.create.input.parse(req.body);
       
       const prompt = `You are a quick meal expert specializing in 5-minute dinner solutions for busy families.
@@ -290,7 +321,7 @@ Respond in JSON format:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: openAiModel,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
@@ -332,6 +363,13 @@ Respond in JSON format:
 
   app.post(api.festivalRecipes.create.path, async (req, res) => {
     try {
+      if (!openai) {
+        return res.status(503).json({
+          message:
+            "Festival recipe generation is not configured. Set OPENAI_API_KEY or AI_INTEGRATIONS_OPENAI_API_KEY.",
+        });
+      }
+
       const input = api.festivalRecipes.create.input.parse(req.body);
       
       const prompt = `You are a cultural cuisine expert specializing in festival and traditional recipes.
@@ -379,7 +417,7 @@ Respond in JSON format:
 }`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: openAiModel,
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
       });
