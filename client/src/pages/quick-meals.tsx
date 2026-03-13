@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Timer, Plus, X, ChevronLeft, Clock } from "lucide-react";
+import { Loader2, Timer, Plus, X, ChevronLeft, Clock, Youtube, BookOpen, Flame, Dumbbell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -182,6 +182,21 @@ export default function QuickMeals() {
                         </ol>
                       </div>
 
+                      {(meal.calories || meal.protein) && (
+                        <div className="flex gap-3 flex-wrap">
+                          {meal.calories > 0 && (
+                            <span className="flex items-center gap-1 text-sm text-orange-700 font-medium bg-orange-50 border border-orange-200 rounded-md px-3 py-1">
+                              <Flame className="h-4 w-4" /> {meal.calories} cal
+                            </span>
+                          )}
+                          {meal.protein > 0 && (
+                            <span className="flex items-center gap-1 text-sm text-blue-700 font-medium bg-blue-50 border border-blue-200 rounded-md px-3 py-1">
+                              <Dumbbell className="h-4 w-4" /> {meal.protein}g protein
+                            </span>
+                          )}
+                        </div>
+                      )}
+
                       {meal.nutrition && (
                         <div className="bg-blue-50 p-3 rounded-lg">
                           <h4 className="font-bold text-blue-700 text-sm mb-1">Nutritional Highlights</h4>
@@ -195,6 +210,30 @@ export default function QuickMeals() {
                           <p className="text-sm text-green-900">{meal.servingSuggestions}</p>
                         </div>
                       )}
+
+                      <div className="flex gap-3 flex-wrap pt-1">
+                        {meal.videoUrl && (
+                          <a href={meal.videoUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50 gap-2">
+                              <Youtube className="h-4 w-4" /> Watch on YouTube
+                            </Button>
+                          </a>
+                        )}
+                        {meal.blogUrl && (
+                          <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2">
+                              <BookOpen className="h-4 w-4" /> Read Full Recipe
+                            </Button>
+                          </a>
+                        )}
+                        {!meal.videoUrl && !meal.blogUrl && meal.recipeSearchQuery && (
+                          <a href={`https://www.google.com/search?q=${encodeURIComponent(meal.recipeSearchQuery + ' recipe')}`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2">
+                              🔍 Find Recipe Online
+                            </Button>
+                          </a>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

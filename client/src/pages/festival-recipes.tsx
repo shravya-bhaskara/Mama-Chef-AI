@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, ChevronLeft, Clock, ChefHat } from "lucide-react";
+import { Loader2, Sparkles, ChevronLeft, Clock, ChefHat, Youtube, BookOpen, Flame } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,16 +21,33 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+const festivalImages: Record<string, string> = {
+  diwali: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=900&h=400&fit=crop",
+  christmas: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=900&h=400&fit=crop",
+  holi: "https://images.unsplash.com/photo-1534854638093-bada1813ca19?w=900&h=400&fit=crop",
+  thanksgiving: "https://images.unsplash.com/photo-1574226516831-e1dff420e562?w=900&h=400&fit=crop",
+  eid: "https://images.unsplash.com/photo-1561043433-aaf687c4cf04?w=900&h=400&fit=crop",
+  "new year": "https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=900&h=400&fit=crop",
+  easter: "https://images.unsplash.com/photo-1613743983303-b3e89f8a2b80?w=900&h=400&fit=crop",
+  halloween: "https://images.unsplash.com/photo-1508361001413-7a9dca21d08a?w=900&h=400&fit=crop",
+  navratri: "https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=900&h=400&fit=crop",
+  chinese: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=900&h=400&fit=crop",
+};
+
+function getFestivalImage(festivalName: string): string {
+  const lower = festivalName.toLowerCase();
+  for (const [key, url] of Object.entries(festivalImages)) {
+    if (lower.includes(key)) return url;
+  }
+  return "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=900&h=400&fit=crop";
+}
+
 export default function FestivalRecipes() {
   const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      festival: "",
-      region: "",
-      culture: "",
-    },
+    defaultValues: { festival: "", region: "", culture: "" },
   });
 
   const mutation = useMutation({
@@ -63,6 +79,8 @@ export default function FestivalRecipes() {
     Intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
     Advanced: "bg-red-50 text-red-700 border-red-200",
   };
+
+  const festivalData = mutation.data?.recipes;
 
   return (
     <div className="min-h-screen bg-[#FFFDF5] pb-12">
@@ -99,7 +117,7 @@ export default function FestivalRecipes() {
                     <FormItem>
                       <FormLabel>Festival Name</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g., Diwali, Christmas, Thanksgiving" className="border-orange-200" />
+                        <Input {...field} placeholder="e.g., Diwali, Christmas, Thanksgiving" className="border-orange-200" data-testid="input-festival" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -140,6 +158,7 @@ export default function FestivalRecipes() {
                   type="submit"
                   disabled={mutation.isPending}
                   className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg font-bold shadow-lg shadow-orange-200"
+                  data-testid="button-get-festival-recipes"
                 >
                   {mutation.isPending ? (
                     <>
@@ -156,15 +175,46 @@ export default function FestivalRecipes() {
         </Card>
 
         <AnimatePresence>
-          {mutation.data && (
+          {mutation.data && festivalData && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="space-y-8"
             >
-              <h2 className="text-2xl font-display font-bold text-gray-800">Festival Recipe Collection</h2>
+              {/* Festival Hero Banner */}
+              <div className="relative rounded-2xl overflow-hidden shadow-lg">
+                <img
+                  src={getFestivalImage(mutation.variables?.festival || "")}
+                  alt={`${mutation.variables?.festival} celebration`}
+                  className="w-full h-52 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent flex flex-col justify-end p-6">
+                  <div className="flex items-center gap-3">
+                    {festivalData.festivalEmoji && (
+                      <span className="text-4xl">{festivalData.festivalEmoji}</span>
+                    )}
+                    <div>
+                      <h2 className="text-3xl font-display font-bold text-white">{mutation.variables?.festival}</h2>
+                      <p className="text-orange-200 text-sm mt-0.5">Festival Recipe Collection</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              {mutation.data.recipes.festivalRecipes.map((recipe: any, idx: number) => (
+              {/* Cultural Celebration Paragraph */}
+              {festivalData.celebrationParagraph && (
+                <Card className="border-amber-200 bg-amber-50/60">
+                  <CardContent className="pt-6">
+                    <div className="flex gap-3">
+                      <span className="text-2xl shrink-0">{festivalData.festivalEmoji || "🎉"}</span>
+                      <p className="text-amber-900 leading-relaxed text-base italic">{festivalData.celebrationParagraph}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Recipes */}
+              {festivalData.festivalRecipes?.map((recipe: any, idx: number) => (
                 <Card key={idx} className="border-orange-100 hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="space-y-3">
@@ -194,8 +244,34 @@ export default function FestivalRecipes() {
                           </Badge>
                         )}
                       </div>
+
+                      {/* Recipe links */}
+                      <div className="flex gap-2 flex-wrap">
+                        {recipe.videoUrl && (
+                          <a href={recipe.videoUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-red-200 text-red-600 hover:bg-red-50 gap-2">
+                              <Youtube className="h-4 w-4" /> Watch on YouTube
+                            </Button>
+                          </a>
+                        )}
+                        {recipe.blogUrl && (
+                          <a href={recipe.blogUrl} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2">
+                              <BookOpen className="h-4 w-4" /> Read Full Recipe
+                            </Button>
+                          </a>
+                        )}
+                        {!recipe.videoUrl && !recipe.blogUrl && recipe.recipeSearchQuery && (
+                          <a href={`https://www.google.com/search?q=${encodeURIComponent(recipe.recipeSearchQuery + ' recipe')}`} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2">
+                              🔍 Find Recipe Online
+                            </Button>
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
+
                   <CardContent className="space-y-4">
                     {recipe.significance && (
                       <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -232,6 +308,15 @@ export default function FestivalRecipes() {
                       </ol>
                     </div>
 
+                    {recipe.nutritionalInfo && (
+                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                        <h4 className="font-bold text-blue-700 text-sm mb-1 flex items-center gap-1">
+                          <Flame className="h-3.5 w-3.5" /> Nutritional Info
+                        </h4>
+                        <p className="text-sm text-blue-900">{recipe.nutritionalInfo}</p>
+                      </div>
+                    )}
+
                     {recipe.servingSuggestions && (
                       <div className="bg-green-50 p-3 rounded-lg">
                         <h4 className="font-bold text-green-700 text-sm mb-1">Serving Suggestions</h4>
@@ -256,14 +341,14 @@ export default function FestivalRecipes() {
                 </Card>
               ))}
 
-              {mutation.data.recipes.festivalTraditions && mutation.data.recipes.festivalTraditions.length > 0 && (
+              {festivalData.festivalTraditions && festivalData.festivalTraditions.length > 0 && (
                 <Card className="border-purple-200 bg-purple-50/50">
                   <CardHeader>
                     <CardTitle className="text-purple-700">Festival Traditions</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2 text-sm">
-                      {mutation.data.recipes.festivalTraditions.map((tradition: string, idx: number) => (
+                      {festivalData.festivalTraditions.map((tradition: string, idx: number) => (
                         <li key={idx} className="flex items-start gap-2">
                           <span className="text-purple-600">✦</span>
                           <span>{tradition}</span>

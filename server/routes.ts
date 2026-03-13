@@ -163,7 +163,8 @@ For each meal, include:
 - Key ingredients
 - Prep time
 - Brief description
-- Nutritional highlights
+- Nutritional highlights (calories estimate, key nutrients)
+- A short Google-friendly search query to find the recipe online
 
 Also provide:
 - A grocery shopping list organized by category
@@ -174,12 +175,11 @@ Respond in JSON format with this structure:
 {
   "weekPlan": {
     "Monday": {
-      "breakfast": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "" },
-      "lunch": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "" },
-      "dinner": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "" },
-      "snacks": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "" }
-    },
-    ... (repeat for all 7 days)
+      "breakfast": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
+      "lunch": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
+      "dinner": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
+      "snacks": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" }
+    }
   },
   "groceryList": {
     "produce": [],
@@ -207,9 +207,12 @@ Create a balanced meal plan focusing on nutritional goals:
 For each day (Monday-Sunday), provide breakfast, lunch, dinner, and snacks with:
 - Recipe name
 - Calorie count
-- Protein content
+- Protein content (grams)
+- Carbohydrates (grams)
+- Fats (grams)
 - Key vitamins and minerals
 - Brief description
+- A short Google-friendly search query to find the recipe online
 
 Also include:
 - Daily nutrition summary
@@ -220,13 +223,12 @@ Respond in JSON format with this structure:
 {
   "weekPlan": {
     "Monday": {
-      "breakfast": { "name": "", "calories": 0, "protein": 0, "vitamins": [], "description": "" },
-      "lunch": { "name": "", "calories": 0, "protein": 0, "vitamins": [], "description": "" },
-      "dinner": { "name": "", "calories": 0, "protein": 0, "vitamins": [], "description": "" },
-      "snacks": { "name": "", "calories": 0, "protein": 0, "vitamins": [], "description": "" },
+      "breakfast": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
+      "lunch": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
+      "dinner": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
+      "snacks": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
       "dailyTotals": { "calories": 0, "protein": 0, "carbs": 0, "fats": 0 }
-    },
-    ... (repeat for all 7 days)
+    }
   },
   "shoppingList": [],
   "nutritionTips": [],
@@ -246,10 +248,37 @@ Respond in JSON format with this structure:
 
       const generatedPlan = JSON.parse(responseContent);
 
+      // Fetch YouTube links for dinners (one per day to keep API calls manageable)
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const enrichedWeekPlan = { ...generatedPlan.weekPlan };
+      await Promise.all(
+        days.map(async (day) => {
+          if (enrichedWeekPlan[day]) {
+            const meals = ['breakfast', 'lunch', 'dinner', 'snacks'];
+            for (const mealType of meals) {
+              const meal = enrichedWeekPlan[day][mealType];
+              if (meal?.recipeSearchQuery) {
+                const [videoUrl, blogUrl] = await Promise.all([
+                  searchYouTubeRecipe(meal.recipeSearchQuery),
+                  searchCookingBlog(meal.recipeSearchQuery),
+                ]);
+                enrichedWeekPlan[day][mealType] = {
+                  ...meal,
+                  videoUrl: videoUrl || undefined,
+                  blogUrl: blogUrl || undefined,
+                };
+              }
+            }
+          }
+        })
+      );
+
+      const enrichedPlan = { ...generatedPlan, weekPlan: enrichedWeekPlan };
+
       const newPlan = await storage.createMealPlan({
         planType: input.planType,
         preferences: input.preferences,
-        meals: generatedPlan,
+        meals: enrichedPlan,
       });
 
       res.status(201).json(newPlan);
@@ -301,8 +330,11 @@ For each meal, provide:
 - Ingredients needed
 - Preparation time (should be ≤5 minutes)
 - Step-by-step instructions (max 3 steps)
-- Nutritional highlights
+- Nutritional highlights (include approximate calories and key nutrients)
+- Calorie estimate
+- Protein estimate (grams)
 - Serving suggestions
+- A short Google-friendly search query to find this recipe online
 
 Respond in JSON format:
 {
@@ -313,7 +345,10 @@ Respond in JSON format:
       "prepTime": "",
       "instructions": [],
       "nutrition": "",
-      "servingSuggestions": ""
+      "calories": 0,
+      "protein": 0,
+      "servingSuggestions": "",
+      "recipeSearchQuery": ""
     }
   ],
   "pantryEssentials": [],
@@ -333,9 +368,22 @@ Respond in JSON format:
 
       const generatedMeals = JSON.parse(responseContent);
 
+      // Fetch YouTube and blog links for each quick meal
+      const mealsWithLinks = await Promise.all(
+        (generatedMeals.quickMeals || []).map(async (meal: any) => {
+          const [videoUrl, blogUrl] = await Promise.all([
+            searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
+            searchCookingBlog(meal.recipeSearchQuery || meal.name),
+          ]);
+          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+        })
+      );
+
+      const enrichedMeals = { ...generatedMeals, quickMeals: mealsWithLinks };
+
       const newMeal = await storage.createQuickMeal({
         ingredients: input.ingredients,
-        meals: generatedMeals,
+        meals: enrichedMeals,
       });
 
       res.status(201).json(newMeal);
@@ -393,6 +441,12 @@ For each recipe, include:
 - Step-by-step instructions
 - Serving suggestions
 - Variations (modern twists, dietary adaptations)
+- Nutritional info (key nutrients, approximate calories)
+- A short Google-friendly search query to find this recipe online
+
+Also provide:
+- A warm, joyful cultural celebration paragraph (3-5 sentences) describing the spirit, traditions, and meaning of this festival — written to evoke joy and celebration
+- Festival emoji that best represents this festival
 
 Respond in JSON format:
 {
@@ -408,12 +462,16 @@ Respond in JSON format:
       "culturalContext": "",
       "instructions": [],
       "servingSuggestions": "",
-      "variations": []
+      "variations": [],
+      "nutritionalInfo": "",
+      "recipeSearchQuery": ""
     }
   ],
   "festivalTraditions": [],
   "cookingTips": [],
-  "menuSuggestions": ""
+  "menuSuggestions": "",
+  "celebrationParagraph": "",
+  "festivalEmoji": ""
 }`;
 
       const response = await openai.chat.completions.create({
@@ -429,11 +487,24 @@ Respond in JSON format:
 
       const generatedRecipes = JSON.parse(responseContent);
 
+      // Fetch YouTube and blog links for each festival recipe
+      const recipesWithLinks = await Promise.all(
+        (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
+          const [videoUrl, blogUrl] = await Promise.all([
+            searchYouTubeRecipe(recipe.recipeSearchQuery || `${recipe.name} ${input.festival} recipe`),
+            searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
+          ]);
+          return { ...recipe, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+        })
+      );
+
+      const enrichedRecipes = { ...generatedRecipes, festivalRecipes: recipesWithLinks };
+
       const newRecipe = await storage.createFestivalRecipe({
         festival: input.festival,
         region: input.region || null,
         culture: input.culture || null,
-        recipes: generatedRecipes,
+        recipes: enrichedRecipes,
       });
 
       res.status(201).json(newRecipe);
