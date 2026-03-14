@@ -431,7 +431,6 @@ export default function QuickMeals() {
                   </div>
                 </TabsContent>
               </Tabs>
-              </div>
 
               {mutation.data.meals.timeSavingTips && mutation.data.meals.timeSavingTips.length > 0 && (
                 <Card className="border-purple-200 bg-purple-50/50">

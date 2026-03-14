@@ -7,16 +7,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, ChevronLeft, Clock, ChefHat, Youtube, BookOpen, Flame } from "lucide-react";
+import { Loader2, Sparkles, ChevronLeft, Clock, ChefHat, Youtube, BookOpen, Flame, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { useUser } from "@/contexts/UserContext";
 
 const formSchema = z.object({
   festival: z.string().min(1, "Festival name is required"),
   region: z.string().optional(),
   culture: z.string().optional(),
+  fastingType: z.enum(['fasting', 'non-fasting', 'both']).optional(),
+  mealType: z.enum(['Starter', 'Main Course', 'Drinks', 'Dessert', 'all']).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -44,10 +49,18 @@ function getFestivalImage(festivalName: string): string {
 
 export default function FestivalRecipes() {
   const { toast } = useToast();
+  const { userId } = useUser();
+  const [likedRecipes, setLikedRecipes] = useState<Set<string>>(new Set());
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
-    defaultValues: { festival: "", region: "", culture: "" },
+    defaultValues: { 
+      festival: "", 
+      region: "", 
+      culture: "",
+      fastingType: 'both',
+      mealType: 'all',
+    },
   });
 
   const mutation = useMutation({
@@ -57,7 +70,7 @@ export default function FestivalRecipes() {
     },
     onSuccess: () => {
       toast({
-        title: "Festival recipes generated!",
+        title: "Festival recipes generated! 🎉",
         description: "Discover authentic recipes for your celebration.",
       });
     },
@@ -69,6 +82,37 @@ export default function FestivalRecipes() {
       });
     },
   });
+
+  const handleLike = async (recipe: any, recipeId: string) => {
+    if (likedRecipes.has(recipeId)) {
+      setLikedRecipes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(recipeId);
+        return newSet;
+      });
+      return;
+    }
+
+    try {
+      await apiRequest("POST", "/api/favorites", {
+        userId,
+        recipeType: 'festival_recipe',
+        recipeData: recipe,
+      });
+      
+      setLikedRecipes(prev => new Set(prev).add(recipeId));
+      toast({
+        title: "Added to favorites! ❤️",
+        description: "Recipe saved to your favorites.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add to favorites.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const onSubmit = (data: FormData) => {
     mutation.mutate(data);
@@ -90,12 +134,20 @@ export default function FestivalRecipes() {
             <Sparkles className="h-8 w-8 text-orange-500" />
             <h1 className="text-2xl font-display font-bold text-gray-800 tracking-tight">Festival & Cultural Recipes</h1>
           </div>
-          <Link href="/">
-            <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Back Home
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/favorites">
+              <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
+                <ChevronLeft className="h-4 w-4" />
+                Back Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -148,6 +200,56 @@ export default function FestivalRecipes() {
                         <FormControl>
                           <Input {...field} placeholder="e.g., Indian, Mexican, Italian" className="border-orange-200" />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="fastingType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fasting Preference</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="border-orange-200">
+                              <SelectValue placeholder="Select fasting type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="both">Both Fasting & Non-Fasting</SelectItem>
+                            <SelectItem value="fasting">Fasting-Friendly Only</SelectItem>
+                            <SelectItem value="non-fasting">Non-Fasting Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="mealType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Meal Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="border-orange-200">
+                              <SelectValue placeholder="Select meal type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="all">All Types</SelectItem>
+                            <SelectItem value="Starter">Starters</SelectItem>
+                            <SelectItem value="Main Course">Main Course</SelectItem>
+                            <SelectItem value="Drinks">Drinks</SelectItem>
+                            <SelectItem value="Dessert">Desserts</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -214,36 +316,61 @@ export default function FestivalRecipes() {
               )}
 
               {/* Recipes */}
-              {festivalData.festivalRecipes?.map((recipe: any, idx: number) => (
-                <Card key={idx} className="border-orange-100 hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-2xl text-gray-900">{recipe.name}</CardTitle>
-                          {recipe.culturalName && (
-                            <p className="text-sm text-orange-600 font-medium mt-1">{recipe.culturalName}</p>
+              {festivalData.festivalRecipes?.map((recipe: any, idx: number) => {
+                const recipeId = `festival-${idx}`;
+                const isLiked = likedRecipes.has(recipeId);
+                return (
+                  <Card key={idx} className="border-orange-100 hover:shadow-md transition-shadow relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`absolute top-4 right-4 z-10 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`}
+                      onClick={() => handleLike(recipe, recipeId)}
+                    >
+                      <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                    </Button>
+
+                    <CardHeader>
+                      <div className="space-y-3 pr-12">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <ChefHat className="h-5 w-5 text-orange-500" />
+                              <CardTitle className="text-2xl text-gray-900">{recipe.name}</CardTitle>
+                            </div>
+                            {recipe.culturalName && (
+                              <p className="text-sm text-orange-600 font-medium mt-1">{recipe.culturalName}</p>
+                            )}
+                          </div>
+                          <Badge className={difficultyColors[recipe.difficulty] || "bg-gray-50 text-gray-700"}>
+                            {recipe.difficulty}
+                          </Badge>
+                        </div>
+
+                        <div className="flex gap-2 flex-wrap">
+                          {recipe.category && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                              <ChefHat className="h-3 w-3 mr-1" />
+                              {recipe.category}
+                            </Badge>
+                          )}
+                          {recipe.mealType && (
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                              {recipe.mealType}
+                            </Badge>
+                          )}
+                          {recipe.fastingStatus && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              {recipe.fastingStatus}
+                            </Badge>
+                          )}
+                          {recipe.cookingTime && (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {recipe.cookingTime}
+                            </Badge>
                           )}
                         </div>
-                        <Badge className={difficultyColors[recipe.difficulty] || "bg-gray-50 text-gray-700"}>
-                          {recipe.difficulty}
-                        </Badge>
-                      </div>
-
-                      <div className="flex gap-2 flex-wrap">
-                        {recipe.category && (
-                          <Badge variant="outline" className="bg-purple-50 text-purple-700">
-                            <ChefHat className="h-3 w-3 mr-1" />
-                            {recipe.category}
-                          </Badge>
-                        )}
-                        {recipe.cookingTime && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                            <Clock className="h-3 w-3 mr-1" />
-                            {recipe.cookingTime}
-                          </Badge>
-                        )}
-                      </div>
 
                       {/* Recipe links */}
                       <div className="flex gap-2 flex-wrap">
@@ -339,7 +466,8 @@ export default function FestivalRecipes() {
                     )}
                   </CardContent>
                 </Card>
-              ))}
+              );
+            })}
 
               {festivalData.festivalTraditions && festivalData.festivalTraditions.length > 0 && (
                 <Card className="border-purple-200 bg-purple-50/50">
