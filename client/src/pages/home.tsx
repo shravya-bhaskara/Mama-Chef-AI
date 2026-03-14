@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Loader2,
   Plus,
@@ -26,12 +26,18 @@ import {
   Crown,
   Youtube,
   BookOpen,
+  ChefHat,
+  Heart,
+  Flame,
+  UtensilsCrossed,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { z } from "zod";
+import { useIngredients } from "@/contexts/IngredientsContext";
+import { useUser } from "@/contexts/UserContext";
 
 const formSchema = z.object({
   ingredients: z.array(z.string()).min(1, "At least one ingredient is required"),
@@ -45,13 +51,15 @@ const formSchema = z.object({
 
 export default function Home() {
   const { toast } = useToast();
+  const { userId } = useUser();
+  const { ingredients, addIngredient: addToContext, removeIngredient: removeFromContext, setIngredients: setContextIngredients } = useIngredients();
   const [ingredientInput, setIngredientInput] = useState("");
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [likedRecipes, setLikedRecipes] = useState<Set<string>>(new Set());
 
   const form = useForm<CreateRecipeRequest>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      ingredients: [],
+      ingredients: ingredients,
       preferences: {
         cuisine: "",
         familySize: "",
@@ -60,6 +68,11 @@ export default function Home() {
       },
     },
   });
+
+  // Sync form with context ingredients on mount and when context changes
+  useEffect(() => {
+    form.setValue("ingredients", ingredients);
+  }, [ingredients, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: CreateRecipeRequest) => {
@@ -84,17 +97,46 @@ export default function Home() {
 
   const addIngredient = () => {
     if (ingredientInput.trim() && !ingredients.includes(ingredientInput.trim())) {
-      const newIngredients = [...ingredients, ingredientInput.trim()];
-      setIngredients(newIngredients);
-      form.setValue("ingredients", newIngredients);
+      addToContext(ingredientInput.trim());
       setIngredientInput("");
     }
   };
 
   const removeIngredient = (ing: string) => {
-    const newIngredients = ingredients.filter((i) => i !== ing);
-    setIngredients(newIngredients);
-    form.setValue("ingredients", newIngredients);
+    removeFromContext(ing);
+  };
+
+  const handleLikeRecipe = async (recipe: any, index: number) => {
+    const recipeId = `recipe-${index}`;
+    
+    if (likedRecipes.has(recipeId)) {
+      setLikedRecipes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(recipeId);
+        return newSet;
+      });
+      return;
+    }
+
+    try {
+      await apiRequest("POST", "/api/favorites", {
+        userId,
+        recipeType: 'recipe',
+        recipeData: recipe,
+      });
+      
+      setLikedRecipes(prev => new Set(prev).add(recipeId));
+      toast({
+        title: "Added to favorites! ❤️",
+        description: "Recipe saved to your favorites.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add to favorites.",
+        variant: "destructive",
+      });
+    }
   };
 
   const onSubmit = (data: CreateRecipeRequest) => {
@@ -158,23 +200,34 @@ export default function Home() {
       <header className="bg-white border-b border-orange-100 py-6 px-4 mb-8">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Utensils className="h-8 w-8 text-orange-500" />
+            <ChefHat className="h-8 w-8 text-orange-500" />
             <h1 className="text-2xl font-display font-bold text-gray-800 tracking-tight">Mama's Kitchen AI</h1>
           </div>
-          <Link href="/history">
-            <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
-              <History className="h-4 w-4" />
-              History
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/favorites">
+              <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </Button>
+            </Link>
+            <Link href="/history">
+              <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
+                <History className="h-4 w-4" />
+                History
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 space-y-8">
         <Card className="border-orange-100 shadow-sm bg-white/50 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-800">What's in your pantry?</CardTitle>
-            <CardDescription>Enter the ingredients you have and let Mama's AI help you decide what to cook.</CardDescription>
+            <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+              <UtensilsCrossed className="h-6 w-6 text-orange-500" />
+              What's in your pantry?
+            </CardTitle>
+            <CardDescription>Enter the ingredients you have and discover recipes from cuisines around the world. Your ingredients will be saved as you navigate.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -436,19 +489,64 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-1 gap-6"
             >
-              <h2 className="text-2xl font-display font-bold text-gray-800 mt-8 mb-4">Mama's Suggestions</h2>
-              {mutation.data.suggestions.map((suggestion: any, idx: number) => (
-                <Card key={idx} className="border-orange-100 overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="p-6 space-y-4">
-                    <div className="flex justify-between items-start gap-4">
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">{suggestion.name}</h3>
-                        <p className="text-gray-600 mt-1">{suggestion.description}</p>
+              <div className="flex items-center justify-between mt-8 mb-4">
+                <h2 className="text-2xl font-display font-bold text-gray-800 flex items-center gap-2">
+                  <ChefHat className="h-6 w-6 text-orange-500" />
+                  Mama's Suggestions
+                </h2>
+                <Badge className="bg-orange-100 text-orange-700">
+                  {mutation.data.suggestions.length} Recipes from Around the World
+                </Badge>
+              </div>
+              {mutation.data.suggestions.map((suggestion: any, idx: number) => {
+                const isLiked = likedRecipes.has(`recipe-${idx}`);
+                return (
+                  <Card key={idx} className="border-orange-100 overflow-hidden hover:shadow-md transition-shadow relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`absolute top-4 right-4 z-10 ${isLiked ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`}
+                      onClick={() => handleLikeRecipe(suggestion, idx)}
+                    >
+                      <Heart className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`} />
+                    </Button>
+                    
+                    <div className="p-6 space-y-4">
+                      <div className="flex justify-between items-start gap-4 pr-12">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <ChefHat className="h-5 w-5 text-orange-500" />
+                            <h3 className="text-xl font-bold text-gray-900">{suggestion.name}</h3>
+                          </div>
+                          <p className="text-gray-600">{suggestion.description}</p>
+                          
+                          {/* Meal Type & Cooking Time */}
+                          <div className="flex gap-2 flex-wrap">
+                            {suggestion.mealType && (
+                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                                {suggestion.mealType}
+                              </Badge>
+                            )}
+                            {suggestion.cookingTime && (
+                              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                ⏱️ {suggestion.cookingTime}
+                              </Badge>
+                            )}
+                            {suggestion.servings && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                🍽️ {suggestion.servings}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex flex-col gap-2 shrink-0">
+                      
+                      {/* Recipe Links */}
+                      <div className="flex gap-2 flex-wrap">
                         {suggestion.videoUrl && (
                           <Button
                             variant="outline"
+                            size="sm"
                             className="border-red-200 text-red-600 hover:bg-red-50 gap-2"
                             onClick={() => window.open(suggestion.videoUrl, "_blank")}
                           >
@@ -459,6 +557,7 @@ export default function Home() {
                         {suggestion.blogUrl && (
                           <Button
                             variant="outline"
+                            size="sm"
                             className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
                             onClick={() => window.open(suggestion.blogUrl, "_blank")}
                           >
@@ -466,9 +565,10 @@ export default function Home() {
                             Read Recipe
                           </Button>
                         )}
-                        {!suggestion.videoUrl && !suggestion.blogUrl && (
+                        {!suggestion.videoUrl && !suggestion.blogUrl && suggestion.recipeSearchQuery && (
                           <Button
                             variant="outline"
+                            size="sm"
                             className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2"
                             onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`, "_blank")}
                           >
@@ -477,31 +577,68 @@ export default function Home() {
                           </Button>
                         )}
                       </div>
-                    </div>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">Ingredients Used</span>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {suggestion.ingredientsUsed.map((ing: string) => (
-                            <Badge key={ing} variant="outline" className="bg-white text-gray-700 border-gray-200 font-normal">
-                              {ing}
-                            </Badge>
-                          ))}
+                      
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {/* Ingredients */}
+                        <div>
+                          <span className="text-xs font-bold text-orange-500 uppercase tracking-wider">Ingredients</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {suggestion.ingredientsUsed.map((ing: string) => (
+                              <Badge key={ing} variant="outline" className="bg-white text-gray-700 border-gray-200 font-normal text-xs">
+                                {ing}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
+
+                        {/* Nutritional Info */}
+                        {(suggestion.calories || suggestion.protein) && (
+                          <div className="bg-orange-50/50 p-3 rounded-lg border border-orange-100">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Flame className="h-4 w-4 text-orange-500" />
+                              <span className="text-sm font-bold text-orange-700">Nutrition</span>
+                            </div>
+                            <div className="flex gap-3 text-xs">
+                              {suggestion.calories > 0 && (
+                                <span className="text-orange-700 font-medium">{suggestion.calories} cal</span>
+                              )}
+                              {suggestion.protein > 0 && (
+                                <span className="text-blue-700 font-medium">{suggestion.protein}g protein</span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Info className="h-4 w-4 text-blue-500" />
-                          <span className="text-sm font-bold text-blue-700">Nutritional Benefits</span>
+                      {/* Cooking Instructions */}
+                      {suggestion.instructions && suggestion.instructions.length > 0 && (
+                        <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                          <div className="flex items-center gap-2 mb-3">
+                            <ChefHat className="h-4 w-4 text-blue-500" />
+                            <span className="text-sm font-bold text-blue-700">Cooking Steps</span>
+                          </div>
+                          <ol className="list-decimal list-inside space-y-2 text-sm text-blue-900">
+                            {suggestion.instructions.map((step: string, i: number) => (
+                              <li key={i} className="leading-relaxed">{step}</li>
+                            ))}
+                          </ol>
                         </div>
-                        <p className="text-sm text-blue-900 leading-relaxed">{suggestion.nutritionalInfo}</p>
-                      </div>
+                      )}
+
+                      {/* Nutritional Details */}
+                      {suggestion.nutritionalInfo && (
+                        <div className="bg-green-50/50 p-4 rounded-lg border border-green-100">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Info className="h-4 w-4 text-green-500" />
+                            <span className="text-sm font-bold text-green-700">Nutritional Benefits</span>
+                          </div>
+                          <p className="text-sm text-green-900 leading-relaxed">{suggestion.nutritionalInfo}</p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </motion.div>
           )}
         </AnimatePresence>
