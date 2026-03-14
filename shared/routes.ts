@@ -66,6 +66,7 @@ export const api = {
           dietaryRestrictions: z.string().optional(),
           calorieGoal: z.number().optional(),
           proteinGoal: z.number().optional(),
+          ageBracket: z.string().optional(),
         }),
       }),
       responses: {
@@ -111,6 +112,8 @@ export const api = {
         festival: z.string(),
         region: z.string().optional(),
         culture: z.string().optional(),
+        fastingType: z.enum(['fasting', 'non-fasting', 'both']).optional(),
+        mealType: z.enum(['Starter', 'Main Course', 'Drinks', 'Dessert', 'all']).optional(),
       }),
       responses: {
         201: z.any(),

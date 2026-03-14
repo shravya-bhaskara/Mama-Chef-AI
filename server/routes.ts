@@ -59,7 +59,7 @@ export async function registerRoutes(
 
       const input = api.recipes.create.input.parse(req.body);
       
-      const prompt = `You are an expert culinary assistant designed to help mothers worldwide figure out what to cook.
+      const prompt = `You are an expert culinary assistant designed to help people worldwide figure out what to cook from dishes across any part of the world.
 The user has the following ingredients at home: ${input.ingredients.join(', ')}.
 Their preferences are: 
 - Cuisine: ${input.preferences.cuisine || 'Any'}
@@ -67,16 +67,25 @@ Their preferences are:
 - Family Size: ${input.preferences.familySize || 'Not specified'}
 - Dietary Restrictions: ${input.preferences.dietaryRestrictions || 'None'}
 
-Please provide 3 recipe suggestions that utilize these ingredients and fit their preferences. 
-Also, provide nutritional information for the key ingredients used and a search query they can use to find similar recipes online.
+Please provide 10-15 recipe suggestions that utilize these ingredients and fit their preferences. 
+Include diverse recipes from various cuisines and cultures around the world.
+For each recipe, provide COMPLETE step-by-step cooking instructions, full ingredient lists, detailed nutritional information, approximate cooking time, and meal type category.
+
 Respond in JSON format with the following structure:
 {
   "suggestions": [
     {
       "name": "Recipe Name",
       "description": "Short description of the recipe and why it fits",
-      "ingredientsUsed": ["ingredient 1", "ingredient 2"],
-      "nutritionalInfo": "Brief breakdown of the nutrients brought in by these ingredients",
+      "mealType": "Starter/Main Course/Drinks/Dessert",
+      "cookingTime": "e.g., 30 minutes",
+      "servings": "e.g., 4 servings",
+      "ingredientsUsed": ["ingredient 1 with quantity", "ingredient 2 with quantity"],
+      "instructions": ["Step 1: detailed instruction", "Step 2: detailed instruction", "Step 3: ..."],
+      "nutritionalInfo": "Detailed breakdown: calories, protein, carbs, fats, vitamins, minerals",
+      "calories": 450,
+      "protein": 25,
+      "dishImageQuery": "professional food photography of [dish name]",
       "recipeSearchQuery": "Google search query to find similar recipes, e.g. 'traditional italian tomato basil pasta recipe'"
     }
   ]
@@ -152,19 +161,24 @@ Respond in JSON format with the following structure:
       const input = api.mealPlans.create.input.parse(req.body);
       
       const prompt = input.planType === 'weekly' 
-        ? `You are an expert meal planning assistant. Create a comprehensive 7-day meal plan.
+        ? `You are an expert meal planning assistant. Create a comprehensive 7-day meal plan with dishes from any part of the world.
 Family Size: ${input.preferences.familySize || 'Not specified'}
 Cuisine Preference: ${input.preferences.cuisine || 'Any'}
 Dietary Restrictions: ${input.preferences.dietaryRestrictions || 'None'}
+Age Bracket: ${input.preferences.ageBracket || 'All ages'}
 
 Create a meal plan with breakfast, lunch, dinner, and snacks for each day of the week (Monday to Sunday).
 For each meal, include:
 - Recipe name
-- Key ingredients
+- Key ingredients with quantities
 - Prep time
-- Brief description
-- Nutritional highlights (calories estimate, key nutrients)
+- Complete step-by-step cooking instructions
+- Detailed nutritional information (calories estimate, key nutrients, vitamins)
+- Meal type (Starter/Main Course/Drinks/Dessert)
 - A short Google-friendly search query to find the recipe online
+- Dish image search query for professional food photography
+
+Provide 10-15 diverse recipe options across the week from various world cuisines.
 
 Also provide:
 - A grocery shopping list organized by category
@@ -175,10 +189,10 @@ Respond in JSON format with this structure:
 {
   "weekPlan": {
     "Monday": {
-      "breakfast": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
-      "lunch": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
-      "dinner": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" },
-      "snacks": { "name": "", "ingredients": [], "prepTime": "", "description": "", "nutrition": "", "calories": 0, "protein": 0, "recipeSearchQuery": "" }
+      "breakfast": { "name": "", "ingredients": [], "prepTime": "", "instructions": [], "description": "", "nutrition": "", "calories": 0, "protein": 0, "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "lunch": { "name": "", "ingredients": [], "prepTime": "", "instructions": [], "description": "", "nutrition": "", "calories": 0, "protein": 0, "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "dinner": { "name": "", "ingredients": [], "prepTime": "", "instructions": [], "description": "", "nutrition": "", "calories": 0, "protein": 0, "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "snacks": { "name": "", "ingredients": [], "prepTime": "", "instructions": [], "description": "", "nutrition": "", "calories": 0, "protein": 0, "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" }
     }
   },
   "groceryList": {
@@ -191,11 +205,12 @@ Respond in JSON format with this structure:
   "mealPrepTips": [],
   "leftoverIdeas": []
 }`
-        : `You are a nutrition-focused meal planning assistant. Create a health-oriented 7-day meal plan.
+        : `You are a nutrition-focused meal planning assistant. Create a health-oriented 7-day meal plan with dishes from around the world.
 Family Size: ${input.preferences.familySize || 'Not specified'}
 Dietary Restrictions: ${input.preferences.dietaryRestrictions || 'None'}
 Calorie Goal: ${input.preferences.calorieGoal || 'Not specified'} calories per day
 Protein Goal: ${input.preferences.proteinGoal || 'Not specified'}g per day
+Age Bracket: ${input.preferences.ageBracket || 'All ages'}
 
 Create a balanced meal plan focusing on nutritional goals:
 - Daily calorie targets
@@ -206,13 +221,18 @@ Create a balanced meal plan focusing on nutritional goals:
 
 For each day (Monday-Sunday), provide breakfast, lunch, dinner, and snacks with:
 - Recipe name
+- Complete step-by-step cooking instructions
 - Calorie count
 - Protein content (grams)
 - Carbohydrates (grams)
 - Fats (grams)
 - Key vitamins and minerals
 - Brief description
+- Meal type category
 - A short Google-friendly search query to find the recipe online
+- Dish image search query
+
+Include 10-15 diverse healthy recipes across the week.
 
 Also include:
 - Daily nutrition summary
@@ -223,10 +243,10 @@ Respond in JSON format with this structure:
 {
   "weekPlan": {
     "Monday": {
-      "breakfast": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
-      "lunch": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
-      "dinner": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
-      "snacks": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "description": "", "recipeSearchQuery": "" },
+      "breakfast": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "instructions": [], "description": "", "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "lunch": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "instructions": [], "description": "", "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "dinner": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "instructions": [], "description": "", "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
+      "snacks": { "name": "", "calories": 0, "protein": 0, "carbs": 0, "fats": 0, "vitamins": [], "instructions": [], "description": "", "mealType": "", "recipeSearchQuery": "", "dishImageQuery": "" },
       "dailyTotals": { "calories": 0, "protein": 0, "carbs": 0, "fats": 0 }
     }
   },
@@ -315,25 +335,26 @@ Respond in JSON format with this structure:
 
       const input = api.quickMeals.create.input.parse(req.body);
       
-      const prompt = `You are a quick meal expert specializing in 5-minute dinner solutions for busy families.
+      const prompt = `You are a quick meal expert specializing in 5-minute dinner solutions and hostel-friendly quick cooking for busy families and students.
 Available ingredients: ${input.ingredients.join(', ')}
 
-Generate 5 ultra-quick dinner ideas that:
-- Take 5 minutes or less to prepare
-- Use minimal ingredients (preferably from the list provided)
-- Require minimal cooking (microwave, toaster, or no cooking preferred)
-- Are family-friendly and nutritious
-- Have simple, clear instructions
+Generate 10-12 ultra-quick ideas divided into two categories:
+1. **5-Minute Dinner Rescue** (6-7 recipes): Quick family meals
+2. **Hostel Quick Food Ideas** (4-5 recipes): Minimal ingredient, creative meals perfect for hostel/dorm cooking with limited equipment
 
 For each meal, provide:
 - Name
-- Ingredients needed
+- Category (Quick Dinner / Hostel Food)
+- Meal Type (Starter/Main Course/Drinks/Dessert)
+- Ingredients needed with quantities
 - Preparation time (should be ≤5 minutes)
-- Step-by-step instructions (max 3 steps)
+- Complete step-by-step instructions
+- Equipment needed (microwave, toaster, kettle, etc.)
 - Nutritional highlights (include approximate calories and key nutrients)
 - Calorie estimate
 - Protein estimate (grams)
 - Serving suggestions
+- Dish image search query for professional food photography
 - A short Google-friendly search query to find this recipe online
 
 Respond in JSON format:
@@ -341,13 +362,34 @@ Respond in JSON format:
   "quickMeals": [
     {
       "name": "",
+      "category": "Quick Dinner",
+      "mealType": "",
       "ingredients": [],
       "prepTime": "",
       "instructions": [],
+      "equipment": [],
       "nutrition": "",
       "calories": 0,
       "protein": 0,
       "servingSuggestions": "",
+      "dishImageQuery": "",
+      "recipeSearchQuery": ""
+    }
+  ],
+  "hostelMeals": [
+    {
+      "name": "",
+      "category": "Hostel Food",
+      "mealType": "",
+      "ingredients": [],
+      "prepTime": "",
+      "instructions": [],
+      "equipment": [],
+      "nutrition": "",
+      "calories": 0,
+      "protein": 0,
+      "servingSuggestions": "",
+      "dishImageQuery": "",
       "recipeSearchQuery": ""
     }
   ],
@@ -369,7 +411,7 @@ Respond in JSON format:
       const generatedMeals = JSON.parse(responseContent);
 
       // Fetch YouTube and blog links for each quick meal
-      const mealsWithLinks = await Promise.all(
+      const quickMealsWithLinks = await Promise.all(
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
           const [videoUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
@@ -379,7 +421,22 @@ Respond in JSON format:
         })
       );
 
-      const enrichedMeals = { ...generatedMeals, quickMeals: mealsWithLinks };
+      // Fetch YouTube and blog links for hostel meals
+      const hostelMealsWithLinks = await Promise.all(
+        (generatedMeals.hostelMeals || []).map(async (meal: any) => {
+          const [videoUrl, blogUrl] = await Promise.all([
+            searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
+            searchCookingBlog(meal.recipeSearchQuery || meal.name),
+          ]);
+          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+        })
+      );
+
+      const enrichedMeals = { 
+        ...generatedMeals, 
+        quickMeals: quickMealsWithLinks,
+        hostelMeals: hostelMealsWithLinks
+      };
 
       const newMeal = await storage.createQuickMeal({
         ingredients: input.ingredients,
@@ -420,12 +477,17 @@ Respond in JSON format:
 
       const input = api.festivalRecipes.create.input.parse(req.body);
       
-      const prompt = `You are a cultural cuisine expert specializing in festival and traditional recipes.
+      const fastingFilter = (input as any).fastingType || 'both';
+      const mealTypeFilter = (input as any).mealType || 'all';
+      
+      const prompt = `You are a cultural cuisine expert specializing in festival and traditional recipes from any part of the world.
 Festival: ${input.festival}
 Region: ${input.region || 'Any'}
 Culture: ${input.culture || 'Any'}
+Fasting Requirement: ${fastingFilter === 'fasting' ? 'Only fasting-friendly foods (no onion, no garlic, vegetarian)' : fastingFilter === 'non-fasting' ? 'Regular foods allowed' : 'Mix of both fasting and non-fasting options'}
+Meal Type Filter: ${mealTypeFilter === 'all' ? 'All types (Starters, Main Course, Drinks, Desserts)' : mealTypeFilter}
 
-Provide authentic recipe recommendations for this festival, including:
+Provide 10-15 authentic recipe recommendations for this festival from various world cuisines, including:
 - Traditional main dishes
 - Side dishes and accompaniments
 - Desserts and sweets
@@ -433,15 +495,18 @@ Provide authentic recipe recommendations for this festival, including:
 
 For each recipe, include:
 - Recipe name (with cultural/regional name if applicable)
+- Meal Type (Starter/Main Course/Drinks/Dessert)
+- Fasting Status (Fasting-Friendly / Non-Fasting)
 - Significance to the festival
-- Ingredients list
+- Complete ingredients list with quantities
 - Difficulty level (Beginner/Intermediate/Advanced)
 - Cooking time
 - Brief cultural context
-- Step-by-step instructions
+- Complete step-by-step instructions (at least 5-8 detailed steps)
 - Serving suggestions
 - Variations (modern twists, dietary adaptations)
-- Nutritional info (key nutrients, approximate calories)
+- Detailed nutritional info (key nutrients, vitamins, approximate calories, protein)
+- Dish image search query for professional food photography
 - A short Google-friendly search query to find this recipe online
 
 Also provide:
@@ -455,6 +520,8 @@ Respond in JSON format:
       "name": "",
       "culturalName": "",
       "category": "",
+      "mealType": "",
+      "fastingStatus": "",
       "significance": "",
       "ingredients": [],
       "difficulty": "",
@@ -464,6 +531,7 @@ Respond in JSON format:
       "servingSuggestions": "",
       "variations": [],
       "nutritionalInfo": "",
+      "dishImageQuery": "",
       "recipeSearchQuery": ""
     }
   ],
@@ -517,6 +585,50 @@ Respond in JSON format:
       }
       console.error(err);
       res.status(500).json({ message: "Failed to generate festival recipes" });
+    }
+  });
+
+  // Favorites Routes
+  app.get("/api/favorites/:userId", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const favorites = await storage.getFavorites(userId);
+      res.json(favorites);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  app.post("/api/favorites", async (req, res) => {
+    try {
+      const { userId, recipeType, recipeData } = req.body;
+      
+      if (!userId || !recipeType || !recipeData) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      const newFavorite = await storage.addFavorite({
+        userId,
+        recipeType,
+        recipeData,
+      });
+
+      res.status(201).json(newFavorite);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  app.delete("/api/favorites/:userId/:id", async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const id = parseInt(req.params.id);
+      
+      await storage.removeFavorite(userId, id);
+      res.status(200).json({ message: "Favorite removed successfully" });
+    } catch (err) {
+      res.status(500).json({ message: "Failed to remove favorite" });
     }
   });
 

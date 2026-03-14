@@ -70,3 +70,25 @@ export const festivalRecipes = pgTable("festival_recipes", {
 });
 
 export type FestivalRecipe = typeof festivalRecipes.$inferSelect;
+
+// Favorites Table
+export const favorites = pgTable("favorites", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(), // Simple device-based user ID
+  recipeType: text("recipe_type").notNull(), // 'recipe', 'meal_plan', 'quick_meal', 'festival_recipe', 'hostel_meal'
+  recipeId: serial("recipe_id"),
+  recipeData: jsonb("recipe_data").notNull(), // Store the full recipe data
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Favorite = typeof favorites.$inferSelect;
+
+// Hostel Meals Table
+export const hostelMeals = pgTable("hostel_meals", {
+  id: serial("id").primaryKey(),
+  ingredients: text("ingredients").array(),
+  meals: jsonb("meals").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type HostelMeal = typeof hostelMeals.$inferSelect;
