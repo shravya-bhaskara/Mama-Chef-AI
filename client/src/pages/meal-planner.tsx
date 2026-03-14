@@ -11,7 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Apple, ChevronLeft, ShoppingCart, Utensils } from "lucide-react";
+import { Loader2, Calendar, Apple, ChevronLeft, ShoppingCart, Utensils, Youtube, BookOpen, Flame, Dumbbell, Wheat, Droplets } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
@@ -81,20 +81,71 @@ export default function MealPlanner() {
 
   const renderMealCard = (meal: any, mealType: string) => (
     <Card className="border-orange-100">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-2">
         <CardTitle className="text-sm font-bold text-orange-600 uppercase">{mealType}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-3">
         <h4 className="font-bold text-gray-900">{meal.name}</h4>
         <p className="text-sm text-gray-600">{meal.description}</p>
         {meal.prepTime && <p className="text-xs text-gray-500">⏱️ {meal.prepTime}</p>}
-        {meal.calories && (
-          <div className="flex gap-2 text-xs">
-            <Badge variant="outline">{meal.calories} cal</Badge>
-            {meal.protein && <Badge variant="outline">{meal.protein}g protein</Badge>}
+
+        {(meal.calories || meal.protein || meal.carbs || meal.fats) && (
+          <div className="bg-orange-50 rounded-lg p-2 space-y-1">
+            <div className="flex flex-wrap gap-2 text-xs">
+              {meal.calories > 0 && (
+                <span className="flex items-center gap-1 text-orange-700 font-medium">
+                  <Flame className="h-3 w-3" /> {meal.calories} cal
+                </span>
+              )}
+              {meal.protein > 0 && (
+                <span className="flex items-center gap-1 text-blue-700 font-medium">
+                  <Dumbbell className="h-3 w-3" /> {meal.protein}g protein
+                </span>
+              )}
+              {meal.carbs > 0 && (
+                <span className="flex items-center gap-1 text-amber-700 font-medium">
+                  <Wheat className="h-3 w-3" /> {meal.carbs}g carbs
+                </span>
+              )}
+              {meal.fats > 0 && (
+                <span className="flex items-center gap-1 text-green-700 font-medium">
+                  <Droplets className="h-3 w-3" /> {meal.fats}g fats
+                </span>
+              )}
+            </div>
           </div>
         )}
-        {meal.nutrition && <p className="text-xs text-blue-600">{meal.nutrition}</p>}
+
+        {meal.nutrition && <p className="text-xs text-blue-600 leading-relaxed">{meal.nutrition}</p>}
+
+        {meal.vitamins && meal.vitamins.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {meal.vitamins.slice(0, 3).map((v: string, i: number) => (
+              <Badge key={i} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">{v}</Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2 flex-wrap pt-1">
+          {meal.videoUrl && (
+            <a href={meal.videoUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-md px-2 py-1 transition-colors">
+              <Youtube className="h-3 w-3" /> Watch
+            </a>
+          )}
+          {meal.blogUrl && (
+            <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-md px-2 py-1 transition-colors">
+              <BookOpen className="h-3 w-3" /> Recipe
+            </a>
+          )}
+          {!meal.videoUrl && !meal.blogUrl && meal.recipeSearchQuery && (
+            <a href={`https://www.google.com/search?q=${encodeURIComponent(meal.recipeSearchQuery + ' recipe')}`} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-md px-2 py-1 transition-colors">
+              🔍 Find Recipe
+            </a>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

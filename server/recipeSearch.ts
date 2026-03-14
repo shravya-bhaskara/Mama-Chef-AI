@@ -60,13 +60,16 @@ export async function searchYouTubeRecipe(query: string): Promise<string | null>
 }
 
 // Google Custom Search API for cooking blogs
+// Falls back to a crafted Google search URL if API fails or key missing
 export async function searchCookingBlog(query: string): Promise<string | null> {
   const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
-  
+
+  // Fallback: a Google search scoped to popular cooking sites
+  const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' recipe site:allrecipes.com OR site:bbcgoodfood.com OR site:simplyrecipes.com OR site:epicurious.com')}`;
+
   if (!apiKey || !searchEngineId) {
-    console.warn('Google Custom Search API not configured');
-    return null;
+    return fallbackUrl;
   }
 
   try {
@@ -76,41 +79,31 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
         cx: searchEngineId,
         q: `${query} recipe`,
         num: 5,
-        dateRestrict: 'y1', // Within last year for recent content
-        sort: 'date', // Sort by date
       },
     });
 
     if (!response.data.items || response.data.items.length === 0) {
-      return null;
+      return fallbackUrl;
     }
 
-    // Filter for popular cooking domains
     const popularCookingSites = [
-      'allrecipes.com',
-      'foodnetwork.com',
-      'bonappetit.com',
-      'epicurious.com',
-      'seriouseats.com',
-      'tasty.co',
-      'delish.com',
-      'bbcgoodfood.com',
-      'simplyrecipes.com',
-      'thespruceeats.com',
+      'allrecipes.com', 'foodnetwork.com', 'bonappetit.com',
+      'epicurious.com', 'seriouseats.com', 'tasty.co',
+      'delish.com', 'bbcgoodfood.com', 'simplyrecipes.com', 'thespruceeats.com',
     ];
 
-    // Try to find results from popular cooking sites first
     for (const item of response.data.items) {
-      const domain = new URL(item.link).hostname.replace('www.', '');
-      if (popularCookingSites.some(site => domain.includes(site))) {
-        return item.link;
-      }
+      try {
+        const domain = new URL(item.link).hostname.replace('www.', '');
+        if (popularCookingSites.some(site => domain.includes(site))) {
+          return item.link;
+        }
+      } catch {}
     }
 
-    // If no popular site found, return the first result
     return response.data.items[0].link;
   } catch (error: any) {
     console.error('Google Search API error:', error.response?.data || error.message);
-    return null;
+    return fallbackUrl;
   }
 }

@@ -345,26 +345,28 @@ export default function Home() {
         </section>
 
         <section className="grid md:grid-cols-2 gap-4">
-          <Card className="border-orange-100 bg-white">
-            <CardHeader>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-lg text-gray-900">Recipe Packs for Subscribers</CardTitle>
-                <Crown className="h-5 w-5 text-amber-500" />
-              </div>
-              <CardDescription>
-                Premium users can unlock curated recipe packs focused on simple lunchbox recipes using ingredients usually available at home.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Coming Soon</Badge>
-              {premiumPacks.map((pack) => (
-                <p key={pack} className="text-sm text-gray-700 flex gap-2">
-                  <ShoppingBag className="h-4 w-4 text-orange-500 mt-0.5" />
-                  <span>{pack}</span>
-                </p>
-              ))}
-            </CardContent>
-          </Card>
+          <Link href="/recipe-packs">
+            <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
+              <CardHeader>
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="text-lg text-gray-900">Recipe Packs for Subscribers</CardTitle>
+                  <Crown className="h-5 w-5 text-amber-500" />
+                </div>
+                <CardDescription>
+                  Curated recipe packs focused on simple lunchbox recipes using ingredients usually available at home.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Badge className="bg-amber-50 text-amber-700 border border-amber-100">Try Now</Badge>
+                {premiumPacks.map((pack) => (
+                  <p key={pack} className="text-sm text-gray-700 flex gap-2">
+                    <ShoppingBag className="h-4 w-4 text-orange-500 mt-0.5" />
+                    <span>{pack}</span>
+                  </p>
+                ))}
+              </CardContent>
+            </Card>
+          </Link>
 
           <Link href="/festival-recipes">
             <Card className="border-orange-100 bg-white hover:shadow-lg transition-shadow cursor-pointer h-full">
