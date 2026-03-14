@@ -1,473 +1,135 @@
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Apple, ChevronLeft, ShoppingCart, Utensils, Youtube, BookOpen, Flame, Dumbbell, Wheat, Droplets } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Calendar, Apple, ChevronLeft, Heart, Sparkles, ChefHat, Utensils } from "lucide-react";
 import { Link } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
-
-const formSchema = z.object({
-  planType: z.enum(['weekly', 'health']),
-  preferences: z.object({
-    familySize: z.string().optional(),
-    cuisine: z.string().optional(),
-    dietaryRestrictions: z.string().optional(),
-    calorieGoal: z.string().optional(),
-    proteinGoal: z.string().optional(),
-  }),
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 export default function MealPlanner() {
-  const { toast } = useToast();
-  const [planType, setPlanType] = useState<'weekly' | 'health'>('weekly');
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      planType: 'weekly',
-      preferences: {
-        familySize: '',
-        cuisine: '',
-        dietaryRestrictions: '',
-        calorieGoal: '',
-        proteinGoal: '',
-      },
+  const planningOptions = [
+    {
+      title: "Weekly Meal Planner",
+      description: "Build a comprehensive 7-day plan for breakfast, lunch, dinner, and snacks. Perfect for families looking to organize their weekly meals with diverse cuisines from around the world.",
+      icon: Calendar,
+      color: "orange",
+      href: "/weekly-planner",
+      features: [
+        "Complete 7-day meal schedule",
+        "Organized grocery shopping list",
+        "Meal prep tips and leftover ideas",
+        "Age-appropriate meal suggestions",
+        "Family-size customization"
+      ]
     },
-  });
-
-  const mutation = useMutation({
-    mutationFn: async (data: any) => {
-      const payload = {
-        ...data,
-        preferences: {
-          ...data.preferences,
-          calorieGoal: data.preferences.calorieGoal ? parseInt(data.preferences.calorieGoal) : undefined,
-          proteinGoal: data.preferences.proteinGoal ? parseInt(data.preferences.proteinGoal) : undefined,
-        },
-      };
-      const res = await apiRequest("POST", "/api/meal-plans", payload);
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Meal plan generated!",
-        description: "Your personalized meal plan is ready.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to generate meal plan. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = (data: FormData) => {
-    mutation.mutate(data);
-  };
-
-  const renderMealCard = (meal: any, mealType: string) => (
-    <Card className="border-orange-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-bold text-orange-600 uppercase">{mealType}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <h4 className="font-bold text-gray-900">{meal.name}</h4>
-        <p className="text-sm text-gray-600">{meal.description}</p>
-        {meal.prepTime && <p className="text-xs text-gray-500">⏱️ {meal.prepTime}</p>}
-
-        {(meal.calories || meal.protein || meal.carbs || meal.fats) && (
-          <div className="bg-orange-50 rounded-lg p-2 space-y-1">
-            <div className="flex flex-wrap gap-2 text-xs">
-              {meal.calories > 0 && (
-                <span className="flex items-center gap-1 text-orange-700 font-medium">
-                  <Flame className="h-3 w-3" /> {meal.calories} cal
-                </span>
-              )}
-              {meal.protein > 0 && (
-                <span className="flex items-center gap-1 text-blue-700 font-medium">
-                  <Dumbbell className="h-3 w-3" /> {meal.protein}g protein
-                </span>
-              )}
-              {meal.carbs > 0 && (
-                <span className="flex items-center gap-1 text-amber-700 font-medium">
-                  <Wheat className="h-3 w-3" /> {meal.carbs}g carbs
-                </span>
-              )}
-              {meal.fats > 0 && (
-                <span className="flex items-center gap-1 text-green-700 font-medium">
-                  <Droplets className="h-3 w-3" /> {meal.fats}g fats
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-
-        {meal.nutrition && <p className="text-xs text-blue-600 leading-relaxed">{meal.nutrition}</p>}
-
-        {meal.vitamins && meal.vitamins.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {meal.vitamins.slice(0, 3).map((v: string, i: number) => (
-              <Badge key={i} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">{v}</Badge>
-            ))}
-          </div>
-        )}
-
-        <div className="flex gap-2 flex-wrap pt-1">
-          {meal.videoUrl && (
-            <a href={meal.videoUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-red-600 hover:text-red-700 border border-red-200 hover:bg-red-50 rounded-md px-2 py-1 transition-colors">
-              <Youtube className="h-3 w-3" /> Watch
-            </a>
-          )}
-          {meal.blogUrl && (
-            <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-md px-2 py-1 transition-colors">
-              <BookOpen className="h-3 w-3" /> Recipe
-            </a>
-          )}
-          {!meal.videoUrl && !meal.blogUrl && meal.recipeSearchQuery && (
-            <a href={`https://www.google.com/search?q=${encodeURIComponent(meal.recipeSearchQuery + ' recipe')}`} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 border border-gray-200 hover:bg-gray-50 rounded-md px-2 py-1 transition-colors">
-              🔍 Find Recipe
-            </a>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const renderWeekPlan = (plan: any) => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    
-    return (
-      <div className="space-y-8">
-        {days.map((day) => (
-          <div key={day} className="space-y-3">
-            <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-orange-500" />
-              {day}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {plan.weekPlan[day] && (
-                <>
-                  {renderMealCard(plan.weekPlan[day].breakfast, 'Breakfast')}
-                  {renderMealCard(plan.weekPlan[day].lunch, 'Lunch')}
-                  {renderMealCard(plan.weekPlan[day].dinner, 'Dinner')}
-                  {renderMealCard(plan.weekPlan[day].snacks, 'Snacks')}
-                </>
-              )}
-            </div>
-            {plan.weekPlan[day]?.dailyTotals && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-4">
-                  <div className="flex gap-4 text-sm font-medium">
-                    <span>Daily Totals:</span>
-                    <span>{plan.weekPlan[day].dailyTotals.calories} cal</span>
-                    <span>{plan.weekPlan[day].dailyTotals.protein}g protein</span>
-                    <span>{plan.weekPlan[day].dailyTotals.carbs}g carbs</span>
-                    <span>{plan.weekPlan[day].dailyTotals.fats}g fats</span>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        ))}
-
-        {/* Grocery List */}
-        {(plan.groceryList || plan.shoppingList) && (
-          <Card className="border-green-200 bg-green-50/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5 text-green-600" />
-                Shopping List
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {plan.groceryList && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.entries(plan.groceryList).map(([category, items]: [string, any]) => (
-                    <div key={category}>
-                      <h4 className="font-bold text-green-700 capitalize mb-2">{category}</h4>
-                      <ul className="space-y-1 text-sm">
-                        {items.map((item: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-green-600">✓</span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {plan.shoppingList && (
-                <ul className="space-y-1 text-sm">
-                  {plan.shoppingList.map((item: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-green-600">✓</span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Tips */}
-        {(plan.mealPrepTips || plan.nutritionTips) && (
-          <Card className="border-purple-200 bg-purple-50/50">
-            <CardHeader>
-              <CardTitle className="text-purple-700">Tips & Suggestions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {plan.mealPrepTips && (
-                <div>
-                  <h4 className="font-bold text-purple-700 mb-2">Meal Prep Tips</h4>
-                  <ul className="space-y-1 text-sm">
-                    {plan.mealPrepTips.map((tip: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-purple-600">→</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {plan.nutritionTips && (
-                <div>
-                  <h4 className="font-bold text-purple-700 mb-2">Nutrition Tips</h4>
-                  <ul className="space-y-1 text-sm">
-                    {plan.nutritionTips.map((tip: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2">
-                        <span className="text-purple-600">→</span>
-                        <span>{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    );
-  };
+    {
+      title: "Health-Focused Meal Planner",
+      description: "Get a nutrition-optimized 7-day plan designed for specific calorie goals, protein targets, and balanced macros. Ideal for fitness enthusiasts and health-conscious individuals.",
+      icon: Apple,
+      color: "green",
+      href: "/health-planner",
+      features: [
+        "Daily calorie and protein tracking",
+        "Vitamin-rich meal suggestions",
+        "Macro-balanced recipes",
+        "Probiotic and gut-health foods",
+        "Healthy substitution tips"
+      ]
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-[#FFFDF5] pb-12">
       <header className="bg-white border-b border-orange-100 py-6 px-4 mb-8">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
+        <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Calendar className="h-8 w-8 text-orange-500" />
+            <ChefHat className="h-8 w-8 text-orange-500" />
             <h1 className="text-2xl font-display font-bold text-gray-800 tracking-tight">AI Meal Planner</h1>
           </div>
-          <Link href="/">
-            <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
-              <ChevronLeft className="h-4 w-4" />
-              Back Home
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/favorites">
+              <Button variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 gap-2">
+                <Heart className="h-4 w-4" />
+                Favorites
+              </Button>
+            </Link>
+            <Link href="/">
+              <Button variant="ghost" className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 gap-2">
+                <ChevronLeft className="h-4 w-4" />
+                Back Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 space-y-8">
-        <Card className="border-orange-100 shadow-sm bg-white/50 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-800">Create Your Meal Plan</CardTitle>
-            <CardDescription>Get a personalized 7-day meal plan tailored to your needs</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={planType} onValueChange={(value) => { setPlanType(value as 'weekly' | 'health'); form.setValue('planType', value as 'weekly' | 'health'); }}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="weekly" className="gap-2">
-                  <Utensils className="h-4 w-4" />
-                  Weekly Planner
-                </TabsTrigger>
-                <TabsTrigger value="health" className="gap-2">
-                  <Apple className="h-4 w-4" />
-                  Health-Focused
-                </TabsTrigger>
-              </TabsList>
+      <main className="max-w-5xl mx-auto px-4 space-y-8">
+        <div className="text-center space-y-4 py-8">
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles className="h-8 w-8 text-orange-500" />
+          </div>
+          <h2 className="text-3xl font-display font-bold text-gray-800">Choose Your Meal Planning Style</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Select the meal planner that best fits your lifestyle. Both options provide AI-powered meal plans with recipes from cuisines around the world.
+          </p>
+        </div>
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <TabsContent value="weekly" className="space-y-4 mt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="preferences.familySize"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Family Size</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="border-orange-200">
-                                  <SelectValue placeholder="Select family size" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1-2">1-2 People</SelectItem>
-                                <SelectItem value="3-4">3-4 People</SelectItem>
-                                <SelectItem value="5+">5+ People</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="preferences.cuisine"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cuisine Preference</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="border-orange-200">
-                                  <SelectValue placeholder="Select cuisine" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="Italian">Italian</SelectItem>
-                                <SelectItem value="Indian">Indian</SelectItem>
-                                <SelectItem value="Chinese">Chinese</SelectItem>
-                                <SelectItem value="Mexican">Mexican</SelectItem>
-                                <SelectItem value="Mediterranean">Mediterranean</SelectItem>
-                                <SelectItem value="Any">Any Cuisine</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+        <div className="grid md:grid-cols-2 gap-6">
+          {planningOptions.map((option) => (
+            <Link key={option.title} href={option.href}>
+              <Card className={`border-${option.color}-100 hover:shadow-xl transition-all cursor-pointer h-full bg-white group`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-3 flex-1">
+                      <div className={`inline-flex items-center justify-center p-3 rounded-lg bg-${option.color}-50 group-hover:bg-${option.color}-100 transition-colors`}>
+                        <option.icon className={`h-8 w-8 text-${option.color}-600`} />
+                      </div>
+                      <CardTitle className="text-xl text-gray-900">{option.title}</CardTitle>
+                      <CardDescription className="text-sm leading-relaxed">{option.description}</CardDescription>
                     </div>
-
-                    <FormField
-                      control={form.control}
-                      name="preferences.dietaryRestrictions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Dietary Restrictions</FormLabel>
-                          <Input {...field} placeholder="e.g., Vegetarian, Gluten-free" className="border-orange-200" />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TabsContent>
-
-                  <TabsContent value="health" className="space-y-4 mt-0">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="preferences.familySize"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Family Size</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="border-orange-200">
-                                  <SelectValue placeholder="Select family size" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="1-2">1-2 People</SelectItem>
-                                <SelectItem value="3-4">3-4 People</SelectItem>
-                                <SelectItem value="5+">5+ People</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="preferences.dietaryRestrictions"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Dietary Restrictions</FormLabel>
-                            <Input {...field} placeholder="e.g., Vegetarian, Low-carb" className="border-orange-200" />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="preferences.calorieGoal"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Daily Calorie Goal</FormLabel>
-                            <Input {...field} type="number" placeholder="e.g., 2000" className="border-orange-200" />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="preferences.proteinGoal"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Daily Protein Goal (g)</FormLabel>
-                            <Input {...field} type="number" placeholder="e.g., 150" className="border-orange-200" />
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </TabsContent>
-
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-gray-700">Features:</h4>
+                    <ul className="space-y-2">
+                      {option.features.map((feature, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                          <span className={`text-${option.color}-500 mt-0.5`}>✓</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
                   <Button 
-                    type="submit" 
-                    disabled={mutation.isPending} 
-                    className="w-full h-12 bg-orange-600 hover:bg-orange-700 text-lg font-bold shadow-lg shadow-orange-200"
+                    className={`w-full bg-${option.color}-600 hover:bg-${option.color}-700 text-white shadow-lg`}
                   >
-                    {mutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Generating meal plan...
-                      </>
-                    ) : (
-                      "Generate Meal Plan"
-                    )}
+                    <Utensils className="mr-2 h-4 w-4" />
+                    Start {option.title.split(' ')[0]} Planning
                   </Button>
-                </form>
-              </Form>
-            </Tabs>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
+        </div>
+
+        <Card className="border-purple-200 bg-purple-50/50 mt-12">
+          <CardContent className="py-8">
+            <div className="text-center space-y-3">
+              <ChefHat className="h-12 w-12 text-purple-600 mx-auto" />
+              <h3 className="text-xl font-bold text-purple-900">Why Use Our AI Meal Planners?</h3>
+              <p className="text-purple-800 max-w-2xl mx-auto">
+                Our AI-powered meal planners create personalized weekly schedules with recipes from cuisines worldwide. 
+                Each plan includes complete cooking instructions, nutritional information, organized grocery lists, and helpful meal prep tips.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3 pt-4">
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">10-15 Recipes Per Week</Badge>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">Global Cuisines</Badge>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">Age-Appropriate Options</Badge>
+                <Badge className="bg-purple-100 text-purple-700 border-purple-200">Detailed Instructions</Badge>
+              </div>
+            </div>
           </CardContent>
         </Card>
-
-        <AnimatePresence>
-          {mutation.data && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
-            >
-              <h2 className="text-2xl font-display font-bold text-gray-800">Your 7-Day Meal Plan</h2>
-              {renderWeekPlan(mutation.data.meals)}
-            </motion.div>
-          )}
-        </AnimatePresence>
       </main>
     </div>
   );
