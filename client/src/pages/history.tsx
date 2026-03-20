@@ -100,18 +100,18 @@ export default function History() {
                                   Watch Video
                                 </Button>
                               )}
-                              {suggestion.blogUrl && (
+                              {suggestion.recipeUrl && (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
-                                  onClick={() => window.open(suggestion.blogUrl, "_blank")}
+                                  onClick={() => window.open(suggestion.recipeUrl, "_blank")}
                                 >
                                   <BookOpen className="h-3 w-3" />
                                   Read Recipe
                                 </Button>
                               )}
-                              {!suggestion.videoUrl && !suggestion.blogUrl && (
+                              {!suggestion.videoUrl && !suggestion.recipeUrl && (
                                 <Button
                                   variant="outline"
                                   size="sm"

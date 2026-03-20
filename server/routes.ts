@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
-import { searchYouTubeRecipe, searchCookingBlog } from "./recipeSearch";
+import { searchYouTubeRecipe, searchCookingBlog, generateSiteSearchLinks } from "./recipeSearch";
 
 const openAiApiKey =
   process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -58,7 +58,7 @@ export async function registerRoutes(
       }
 
       const input = api.recipes.create.input.parse(req.body);
-      
+      const seed = Math.random();
       const prompt = `You are an expert culinary assistant designed to help people worldwide figure out what to cook from dishes across any part of the world.
 The user has the following ingredients at home: ${input.ingredients.join(', ')}.
 Their preferences are: 
@@ -67,10 +67,11 @@ Their preferences are:
 - Family Size: ${input.preferences.familySize || 'Not specified'}
 - Dietary Restrictions: ${input.preferences.dietaryRestrictions || 'None'}
 
-Please provide 10-15 recipe suggestions that utilize these ingredients and fit their preferences. 
+Please provide 10-15 high quality accurate recipe suggestions that utilize these ingredients and fit their preferences. 
 Include diverse recipes from various cuisines and cultures around the world.
 For each recipe, provide COMPLETE step-by-step cooking instructions, full ingredient lists, detailed nutritional information, approximate cooking time, and meal type category.
-
+Make recipes realistic and practical.
+Avoid vague steps like "cook until done".
 Respond in JSON format with the following structure:
 {
   "suggestions": [
@@ -89,7 +90,9 @@ Respond in JSON format with the following structure:
       "recipeSearchQuery": "Google search query to find similar recipes, e.g. 'traditional italian tomato basil pasta recipe'"
     }
   ]
-}`;
+}
+Seed: ${seed}
+`;
 
       const response = await openai.chat.completions.create({
         model: openAiModel,
@@ -107,15 +110,26 @@ Respond in JSON format with the following structure:
       // Fetch YouTube videos and blog URLs for each suggestion
       const suggestionsWithLinks = await Promise.all(
         generatedData.suggestions.map(async (suggestion: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(suggestion.recipeSearchQuery),
             searchCookingBlog(suggestion.recipeSearchQuery),
+            generateSiteSearchLinks(suggestion.recipeSearchQuery),
           ]);
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
 
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
           return {
             ...suggestion,
             videoUrl: videoUrl || undefined,
-            blogUrl: blogUrl || undefined,
+            recipeUrl: recipeUrl || undefined,
           };
         })
       );
@@ -159,7 +173,7 @@ Respond in JSON format with the following structure:
       }
 
       const input = api.mealPlans.create.input.parse(req.body);
-      
+      const seed = Math.random();
       const prompt = input.planType === 'weekly' 
         ? `You are an expert meal planning assistant. Create a comprehensive 7-day meal plan with dishes from any part of the world.
 Family Size: ${input.preferences.familySize || 'Not specified'}
@@ -168,6 +182,8 @@ Dietary Restrictions: ${input.preferences.dietaryRestrictions || 'None'}
 Age Bracket: ${input.preferences.ageBracket || 'All ages'}
 
 Create a meal plan with breakfast, lunch, dinner, and snacks for each day of the week (Monday to Sunday).
+Make recipes realistic and practical.
+Avoid vague steps like "cook until done".
 For each meal, include:
 - Recipe name
 - Key ingredients with quantities
@@ -253,7 +269,9 @@ Respond in JSON format with this structure:
   "shoppingList": [],
   "nutritionTips": [],
   "substitutions": []
-}`;
+}
+Seed: ${seed};
+`;
 
       const response = await openai.chat.completions.create({
         model: openAiModel,
@@ -278,14 +296,26 @@ Respond in JSON format with this structure:
             for (const mealType of meals) {
               const meal = enrichedWeekPlan[day][mealType];
               if (meal?.recipeSearchQuery) {
-                const [videoUrl, blogUrl] = await Promise.all([
+                const [videoUrl, searchUrl, blogUrl] = await Promise.all([
                   searchYouTubeRecipe(meal.recipeSearchQuery),
                   searchCookingBlog(meal.recipeSearchQuery),
+                  generateSiteSearchLinks(meal.recipeSearchQuery),
                 ]);
+                // Priority 1: blog
+                if (blogUrl) {
+                  recipeUrl = blogUrl;
+                  recipeFrom = "blog";
+                }
+
+                // Priority 3: fallback (site search)
+                else if (searchUrl) {
+                  recipeUrl = searchUrl;
+                  recipeFrom = "search";
+                }
                 enrichedWeekPlan[day][mealType] = {
                   ...meal,
                   videoUrl: videoUrl || undefined,
-                  blogUrl: blogUrl || undefined,
+                  recipeUrl: recipeUrl || undefined,
                 };
               }
             }
@@ -334,10 +364,11 @@ Respond in JSON format with this structure:
       }
 
       const input = api.quickMeals.create.input.parse(req.body);
-      
+      const seed = Math.random();
       const prompt = `You are a quick meal expert specializing in 5-minute dinner solutions and hostel-friendly quick cooking for busy families and students.
 Available ingredients: ${input.ingredients.join(', ')}
-
+Make recipes realistic and practical.
+Avoid vague steps like "cook until done".
 Generate 10-12 ultra-quick ideas divided into two categories:
 1. **5-Minute Dinner Rescue** (6-7 recipes): Quick family meals
 2. **Hostel Quick Food Ideas** (4-5 recipes): Minimal ingredient, creative meals perfect for hostel/dorm cooking with limited equipment
@@ -395,7 +426,9 @@ Respond in JSON format:
   ],
   "pantryEssentials": [],
   "timeSavingTips": []
-}`;
+}
+Seed: ${seed}
+`;
 
       const response = await openai.chat.completions.create({
         model: openAiModel,
@@ -413,22 +446,46 @@ Respond in JSON format:
       // Fetch YouTube and blog links for each quick meal
       const quickMealsWithLinks = await Promise.all(
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...meal, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 
       // Fetch YouTube and blog links for hostel meals
       const hostelMealsWithLinks = await Promise.all(
         (generatedMeals.hostelMeals || []).map(async (meal: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...meal, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 
@@ -479,14 +536,15 @@ Respond in JSON format:
       
       const fastingFilter = (input as any).fastingType || 'both';
       const mealTypeFilter = (input as any).mealType || 'all';
-      
+      const seed = Math.random();
       const prompt = `You are a cultural cuisine expert specializing in festival and traditional recipes from any part of the world.
 Festival: ${input.festival}
 Region: ${input.region || 'Any'}
 Culture: ${input.culture || 'Any'}
 Fasting Requirement: ${fastingFilter === 'fasting' ? 'Only fasting-friendly foods (no onion, no garlic, vegetarian)' : fastingFilter === 'non-fasting' ? 'Regular foods allowed' : 'Mix of both fasting and non-fasting options'}
 Meal Type Filter: ${mealTypeFilter === 'all' ? 'All types (Starters, Main Course, Drinks, Desserts)' : mealTypeFilter}
-
+Make recipes realistic and practical.
+Avoid vague steps like "cook until done".
 Provide 10-15 authentic recipe recommendations for this festival from various world cuisines, including:
 - Traditional main dishes
 - Side dishes and accompaniments
@@ -540,7 +598,9 @@ Respond in JSON format:
   "menuSuggestions": "",
   "celebrationParagraph": "",
   "festivalEmoji": ""
-}`;
+}
+Seed: ${seed}
+`;
 
       const response = await openai.chat.completions.create({
         model: openAiModel,
@@ -558,11 +618,23 @@ Respond in JSON format:
       // Fetch YouTube and blog links for each festival recipe
       const recipesWithLinks = await Promise.all(
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(recipe.recipeSearchQuery || `${recipe.name} ${input.festival} recipe`),
             searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
+            generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
           ]);
-          return { ...recipe, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...recipe, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 

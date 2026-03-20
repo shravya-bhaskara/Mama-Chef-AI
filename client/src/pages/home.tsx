@@ -554,18 +554,18 @@ export default function Home() {
                             Watch Video
                           </Button>
                         )}
-                        {suggestion.blogUrl && (
+                        {suggestion.recipeUrl && (
                           <Button
                             variant="outline"
                             size="sm"
                             className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2"
-                            onClick={() => window.open(suggestion.blogUrl, "_blank")}
+                            onClick={() => window.open(suggestion.recipeUrl, "_blank")}
                           >
                             <BookOpen className="h-4 w-4" />
                             Read Recipe
                           </Button>
                         )}
-                        {!suggestion.videoUrl && !suggestion.blogUrl && suggestion.recipeSearchQuery && (
+                        {!suggestion.videoUrl && !suggestion.recipeUrl && suggestion.recipeSearchQuery && (
                           <Button
                             variant="outline"
                             size="sm"

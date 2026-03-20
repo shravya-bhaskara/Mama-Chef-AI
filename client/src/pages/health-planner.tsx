@@ -187,8 +187,8 @@ export default function HealthPlanner() {
                 <Youtube className="h-3 w-3" /> Watch
               </a>
             )}
-            {meal.blogUrl && (
-              <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer"
+            {meal.recipeUrl && (
+              <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 border border-blue-200 hover:bg-blue-50 rounded-md px-2 py-1 transition-colors">
                 <BookOpen className="h-3 w-3" /> Recipe
               </a>
