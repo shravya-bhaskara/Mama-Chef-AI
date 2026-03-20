@@ -179,21 +179,64 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
         };
       });
     }
-    
+    function isRelevantResult(item: any, recipeName: string) {
+      const title = item.title?.toLowerCase() || "";
+      const snippet = item.snippet?.toLowerCase() || "";
+      const query = recipeName.toLowerCase();
+
+      // ❌ obvious bad signals
+      if (title.includes("search") || snippet.includes("no results")) {
+        return false;
+      }
+
+      // ✅ URL looks like a recipe (ADD HERE)
+      if (link.includes("/recipe") || link.includes("-recipe")) {
+        return true;
+      }
+      // ✅ strong match
+      if (title.includes(query)) return true;
+
+      // ✅ partial match (keywords)
+      const words = query.split(" ");
+      const matchCount = words.filter(word => title.includes(word)).length;
+
+      if (matchCount >= Math.ceil(words.length / 2)) {
+        return true;
+      }
+
+      // ✅ recipe-like content
+      if (
+        snippet.includes("ingredients") ||
+        snippet.includes("instructions") ||
+        snippet.includes("how to make")
+      ) {
+        return true;
+      }
+
+      return false;
+    }
     for (const item of response.data.items) {
       try {
         const domain = new URL(item.link).hostname.replace('www.', '');
         if (popularCookingSites.some(site => domain.includes(site))) {
           const validLinks: string[] = [];
 
-          for (const item of response.data.items || []) {
-            const link = item.link;
-            const domain = new URL(link).hostname;
+        for (const item of response.data.items || []) {
+          const link = item.link;
+          const domain = new URL(link).hostname;
 
-            if (allowedSites.some(site => domain.includes(site))) {
-              validLinks.push(link);
-            }
+          // ✅ Only allowed sites
+          if (!allowedSites.some(site => domain.includes(site))) {
+            continue;
           }
+
+          // ✅ Only relevant results
+          if (!isRelevantResult(item, recipeName)) {
+            continue;
+          }
+
+          validLinks.push(link);
+        }
           if (validLinks.length > 0) {
             const randomIndex = Math.floor(Math.random() * validLinks.length);
             return validLinks[randomIndex];
