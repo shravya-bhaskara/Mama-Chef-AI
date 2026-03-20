@@ -194,14 +194,14 @@ export default function RecipePacks() {
                                 </Button>
                               </a>
                             )}
-                            {suggestion.blogUrl && (
-                              <a href={suggestion.blogUrl} target="_blank" rel="noopener noreferrer">
+                            {suggestion.recipeUrl && (
+                              <a href={suggestion.recipeUrl} target="_blank" rel="noopener noreferrer">
                                 <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2">
                                   <BookOpen className="h-4 w-4" /> Recipe
                                 </Button>
                               </a>
                             )}
-                            {!suggestion.videoUrl && !suggestion.blogUrl && suggestion.recipeSearchQuery && (
+                            {!suggestion.videoUrl && !suggestion.recipeUrl && suggestion.recipeSearchQuery && (
                               <a href={`https://www.google.com/search?q=${encodeURIComponent(suggestion.recipeSearchQuery)}`} target="_blank" rel="noopener noreferrer">
                                 <Button variant="outline" size="sm" className="border-orange-200 text-orange-600 hover:bg-orange-50 gap-2">
                                   🔍 Find
