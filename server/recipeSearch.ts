@@ -43,7 +43,7 @@ export async function searchYouTubeRecipe(query: string): Promise<string | null>
       return null;
     }
 
-    // Sort by view count and recency (most viewed + recent)
+    // Sort by view count (most viewed first)
     const sortedVideos = statsResponse.data.items.sort((a: any, b: any) => {
       const viewsA = parseInt(a.statistics.viewCount || '0');
       const viewsB = parseInt(b.statistics.viewCount || '0');
@@ -151,6 +151,44 @@ export function generateSiteSearchLinks(query: string): string | null {
   return links[randomIndex].url;
 }
 
+function isRelevantResult(item: any, query: string): boolean {
+  const title = item.title?.toLowerCase() || "";
+  const snippet = item.snippet?.toLowerCase() || "";
+  const link = item.link?.toLowerCase() || "";
+  const q = query.toLowerCase();
+
+  // Bad signals — skip search/listing pages
+  if (title.includes("search") || snippet.includes("no results")) {
+    return false;
+  }
+
+  // URL looks like a dedicated recipe page
+  if (link.includes("/recipe") || link.includes("-recipe")) {
+    return true;
+  }
+
+  // Strong title match
+  if (title.includes(q)) return true;
+
+  // Partial keyword match (at least half the words match)
+  const words = q.split(" ");
+  const matchCount = words.filter(word => title.includes(word)).length;
+  if (matchCount >= Math.ceil(words.length / 2)) {
+    return true;
+  }
+
+  // Recipe-like snippet content
+  if (
+    snippet.includes("ingredients") ||
+    snippet.includes("instructions") ||
+    snippet.includes("how to make")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 // Google Custom Search API for cooking blogs
 // Falls back to a crafted Google search URL if API fails or key missing
 export async function searchCookingBlog(query: string): Promise<string | null> {
@@ -178,26 +216,29 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
       return fallbackUrl;
     }
 
+    const validLinks: string[] = [];
+
     for (const item of response.data.items) {
       try {
         const domain = new URL(item.link).hostname.replace('www.', '');
-        if (popularCookingSites.some(site => domain.includes(site))) {
-          const validLinks: string[] = [];
 
-          for (const item of response.data.items || []) {
-            const link = item.link;
-            const domain = new URL(link).hostname;
-
-            if (popularCookingSites.some(site => domain.includes(site))) {
-              validLinks.push(link);
-            }
-          }
-          if (validLinks.length > 0) {
-            const randomIndex = Math.floor(Math.random() * validLinks.length);
-            return validLinks[randomIndex];
-          }
+        // Only include links from allowed cooking sites
+        if (!popularCookingSites.some(site => domain.includes(site))) {
+          continue;
         }
+
+        // Only include relevant recipe results
+        if (!isRelevantResult(item, query)) {
+          continue;
+        }
+
+        validLinks.push(item.link);
       } catch {}
+    }
+
+    if (validLinks.length > 0) {
+      const randomIndex = Math.floor(Math.random() * validLinks.length);
+      return validLinks[randomIndex];
     }
 
     return response.data.items[0].link || null;
