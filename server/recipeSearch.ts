@@ -129,6 +129,57 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
       "theitaliandishblog.com"
     ];
 
+    const siteSearchMap: Record<string, string> = {
+      "krumpli.co.uk": "https://www.krumpli.co.uk/#growMeSearch=",
+      "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
+      "seriouseats.com": "https://www.seriouseats.com/search?q=",
+      "foodnetwork.com": "https://www.foodnetwork.com/search/",
+      "family-friends-food.com": "https://family-friends-food.com/#growMeSearch=",
+      "saveur.com": "https://www.saveur.com/#gsc.tab=0&gsc.q=",
+      "thetinytaster.com": "https://www.thetinytaster.com/?s=",
+      "tastefoodblog.com": "https://tastefoodblog.com/?s=", 
+      "stefangourmet.com": "https://stefangourmet.com/?s=",
+      "foodperestroika.com": "https://foodperestroika.com/?s=",
+      "eatingeuropean.com": "https://eatingeuropean.com/?s=",
+      "www.bonappetit.com": "https://www.bonappetit.com/search?q=",
+      "chewingthefat.us.com": "https://chewingthefat.us.com/?s=",
+      "seriouseats.com": "https://www.seriouseats.com/search?q=",
+      "chicanoeats.com": "https://chicanoeats.com/?s=",
+      "isabeleats.com": "https://www.isabeleats.com/#search/q=", 
+      "holajalapeno.com": "https://www.holajalapeno.com/#search/q=", 
+      "molemama.com": "https://www.molemama.com/search?q=", 
+      "mexicanplease.com": "https://www.mexicanplease.com/?s=", 
+      "eatchofood.com": "https://eatchofood.com/search?q=",
+      "omnivorescookbook.com": "https://omnivorescookbook.com/?s=",
+      "redhousespice.com": "https://redhousespice.com/#search/q=",
+      "tarladalal.com": "https://www.tarladalal.com/recipesearch/?query=",
+      "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
+      "thewoksoflife.com": "https://thewoksoflife.com/#search/q=",
+      "giallozafferano.com": "https://www.giallozafferano.com/recipes-search/",
+      "nonnabox.com": "https://www.nonnabox.com/?s=bell",
+      "italianfoodforever.com": "https://italianfoodforever.com/?s=",
+      "italianhomecooking.co.uk": "https://italianhomecooking.co.uk/?s=",
+      "pinabresciani.com": "https://pinabresciani.com/?s=",
+      "italianhomecooking.co.uk": "https://italianhomecooking.co.uk/?s=",
+      "smittenkitchen.com": "https://smittenkitchen.com/?s=",
+      "indianhealthyrecipes.com": "https://www.indianhealthyrecipes.com/?s=",
+      "pinchofyum.com": "https://pinchofyum.com/?s=#search/q=",
+      "ranveerbrar.com": "https://ranveerbrar.com/?s=",
+      "sanjeevkapoor.com": "https://www.sanjeevkapoor.com/search?title=",
+      "mallikabasu.com": "https://mallikabasu.com/?s=",
+      "ministryofcurry.com": "https://ministryofcurry.com/#search/q=",
+      "theitaliandishblog.com": "https://www.theitaliandishblog.com/search?q="
+};
+
+    function generateSiteSearchLinks(query: string) {
+      return Object.entries(siteSearchMap).map(([site, baseUrl]) => {
+        return {
+          site,
+          url: `${baseUrl}${encodeURIComponent(query)}`
+        };
+      });
+    }
+    
     for (const item of response.data.items) {
       try {
         const domain = new URL(item.link).hostname.replace('www.', '');
