@@ -112,12 +112,21 @@ Respond in JSON format with the following structure:
             searchCookingBlog(suggestion.recipeSearchQuery),
             generateSiteSearchLinks(suggestion.recipeSearchQuery
           ]);
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
 
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
           return {
             ...suggestion,
             videoUrl: videoUrl || undefined,
-            searchUrl: searchUrl || undefined,
-            blogUrl: blogUrl || undefined,
+            recipeUrl: recipeUrl || undefined,
           };
         })
       );
@@ -285,11 +294,21 @@ Respond in JSON format with this structure:
                   searchCookingBlog(meal.recipeSearchQuery),
                   generateSiteSearchLinks(meal.recipeSearchQuery),
                 ]);
+                // Priority 1: blog
+                if (blogUrl) {
+                  recipeUrl = blogUrl;
+                  recipeFrom = "blog";
+                }
+
+                // Priority 3: fallback (site search)
+                else if (searchUrl) {
+                  recipeUrl = searchUrl;
+                  recipeFrom = "search";
+                }
                 enrichedWeekPlan[day][mealType] = {
                   ...meal,
                   videoUrl: videoUrl || undefined,
-                  searchUrl: searchUrl || undefined,
-                  blogUrl: blogUrl || undefined,
+                  recipeUrl: recipeUrl || undefined,
                 };
               }
             }
@@ -422,7 +441,18 @@ Respond in JSON format:
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
             generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, searchUrl: searchUrl || Undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...meal, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 
@@ -434,7 +464,18 @@ Respond in JSON format:
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
             generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, searchUrl: searchUrl || undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...meal, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 
@@ -569,7 +610,18 @@ Respond in JSON format:
             searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
             generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festoival}`),
           ]);
-          return { ...recipe, videoUrl: videoUrl || undefined, searchUrl: searchUrl || undefined, blogUrl: blogUrl || undefined };
+          // Priority 1: blog
+          if (blogUrl) {
+            recipeUrl = blogUrl;
+            recipeFrom = "blog";
+          }
+
+          // Priority 3: fallback (site search)
+          else if (searchUrl) {
+            recipeUrl = searchUrl;
+            recipeFrom = "search";
+          }
+          return { ...recipe, videoUrl: videoUrl || undefined, recipeUrl: recipeUrl || undefined };
         })
       );
 
