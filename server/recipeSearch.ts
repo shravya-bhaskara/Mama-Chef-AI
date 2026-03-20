@@ -184,12 +184,26 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
       try {
         const domain = new URL(item.link).hostname.replace('www.', '');
         if (popularCookingSites.some(site => domain.includes(site))) {
-          return item.link;
+          const validLinks: string[] = [];
+
+          for (const item of response.data.items || []) {
+            const link = item.link;
+            const domain = new URL(link).hostname;
+
+            if (allowedSites.some(site => domain.includes(site))) {
+              validLinks.push(link);
+            }
+          }
+          if (validLinks.length > 0) {
+            const randomIndex = Math.floor(Math.random() * validLinks.length);
+            return validLinks[randomIndex];
+          }
+          
         }
       } catch {}
     }
 
-    return response.data.items[0].link;
+    return response.data.items[0].link || null;
   } catch (error: any) {
     console.error('Google Search API error:', error.response?.data || error.message);
     return fallbackUrl;
