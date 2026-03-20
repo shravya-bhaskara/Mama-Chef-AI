@@ -146,7 +146,9 @@ export function generateSiteSearchLinks(query: string): string | null {
     site,
     url: `${baseUrl}${encodeURIComponent(query)}`
   }));
-  return links.length > 0 ? links[0].url : null;
+  if (links.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * links.length);
+  return links[randomIndex].url;
 }
 
 // Google Custom Search API for cooking blogs
