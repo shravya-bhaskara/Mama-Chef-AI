@@ -115,13 +115,14 @@ Seed: ${seed}
             searchCookingBlog(suggestion.recipeSearchQuery),
             generateSiteSearchLinks(suggestion.recipeSearchQuery),
           ]);
+          let recipeUrl: string | null = null;
+          let recipeFrom: string | null = null;
           // Priority 1: blog
           if (blogUrl) {
             recipeUrl = blogUrl;
             recipeFrom = "blog";
           }
-
-          // Priority 3: fallback (site search)
+          // Priority 2: site search
           else if (searchUrl) {
             recipeUrl = searchUrl;
             recipeFrom = "search";
@@ -301,13 +302,14 @@ Seed: ${seed};
                   searchCookingBlog(meal.recipeSearchQuery),
                   generateSiteSearchLinks(meal.recipeSearchQuery),
                 ]);
+                let recipeUrl: string | null = null;
+                let recipeFrom: string | null = null;
                 // Priority 1: blog
                 if (blogUrl) {
                   recipeUrl = blogUrl;
                   recipeFrom = "blog";
                 }
-
-                // Priority 3: fallback (site search)
+                // Priority 2: site search
                 else if (searchUrl) {
                   recipeUrl = searchUrl;
                   recipeFrom = "search";
@@ -451,13 +453,14 @@ Seed: ${seed}
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
             generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
+          let recipeUrl: string | null = null;
+          let recipeFrom: string | null = null;
           // Priority 1: blog
           if (blogUrl) {
             recipeUrl = blogUrl;
             recipeFrom = "blog";
           }
-
-          // Priority 3: fallback (site search)
+          // Priority 2: site search
           else if (searchUrl) {
             recipeUrl = searchUrl;
             recipeFrom = "search";
@@ -474,13 +477,14 @@ Seed: ${seed}
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
             generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
+          let recipeUrl: string | null = null;
+          let recipeFrom: string | null = null;
           // Priority 1: blog
           if (blogUrl) {
             recipeUrl = blogUrl;
             recipeFrom = "blog";
           }
-
-          // Priority 3: fallback (site search)
+          // Priority 2: site search
           else if (searchUrl) {
             recipeUrl = searchUrl;
             recipeFrom = "search";
@@ -623,13 +627,14 @@ Seed: ${seed}
             searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
             generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
           ]);
+          let recipeUrl: string | null = null;
+          let recipeFrom: string | null = null;
           // Priority 1: blog
           if (blogUrl) {
             recipeUrl = blogUrl;
             recipeFrom = "blog";
           }
-
-          // Priority 3: fallback (site search)
+          // Priority 2: site search
           else if (searchUrl) {
             recipeUrl = searchUrl;
             recipeFrom = "search";
