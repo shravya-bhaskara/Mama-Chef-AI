@@ -302,8 +302,8 @@ export default function QuickMeals() {
                                   </Button>
                                 </a>
                               )}
-                              {meal.blogUrl && (
-                                <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer">
+                              {meal.recipeUrl && (
+                                <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer">
                                   <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2">
                                     <BookOpen className="h-4 w-4" /> Read Full Recipe
                                   </Button>
@@ -416,8 +416,8 @@ export default function QuickMeals() {
                                   </Button>
                                 </a>
                               )}
-                              {meal.blogUrl && (
-                                <a href={meal.blogUrl} target="_blank" rel="noopener noreferrer">
+                              {meal.recipeUrl && (
+                                <a href={meal.recipeUrl} target="_blank" rel="noopener noreferrer">
                                   <Button variant="outline" size="sm" className="border-blue-200 text-blue-600 hover:bg-blue-50 gap-2">
                                     <BookOpen className="h-4 w-4" /> Read Full Recipe
                                   </Button>
