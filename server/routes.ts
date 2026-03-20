@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import OpenAI from "openai";
-import { searchYouTubeRecipe, searchCookingBlog } from "./recipeSearch";
+import { searchYouTubeRecipe, searchCookingBlog, generateSiteSearchLinks } from "./recipeSearch";
 
 const openAiApiKey =
   process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
@@ -110,11 +110,13 @@ Respond in JSON format with the following structure:
           const [videoUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(suggestion.recipeSearchQuery),
             searchCookingBlog(suggestion.recipeSearchQuery),
+            generateSiteSearchLinks(suggestion.recipeSearchQuery
           ]);
 
           return {
             ...suggestion,
             videoUrl: videoUrl || undefined,
+            searchUrl: searchUrl || undefined,
             blogUrl: blogUrl || undefined,
           };
         })
@@ -278,13 +280,15 @@ Respond in JSON format with this structure:
             for (const mealType of meals) {
               const meal = enrichedWeekPlan[day][mealType];
               if (meal?.recipeSearchQuery) {
-                const [videoUrl, blogUrl] = await Promise.all([
+                const [videoUrl, searchUrl, blogUrl] = await Promise.all([
                   searchYouTubeRecipe(meal.recipeSearchQuery),
                   searchCookingBlog(meal.recipeSearchQuery),
+                  generateSiteSearchLinks(meal.recipeSearchQuery),
                 ]);
                 enrichedWeekPlan[day][mealType] = {
                   ...meal,
                   videoUrl: videoUrl || undefined,
+                  searchUrl: searchUrl || undefined,
                   blogUrl: blogUrl || undefined,
                 };
               }
@@ -413,22 +417,24 @@ Respond in JSON format:
       // Fetch YouTube and blog links for each quick meal
       const quickMealsWithLinks = await Promise.all(
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          return { ...meal, videoUrl: videoUrl || undefined, searchUrl: searchUrl || Undefined, blogUrl: blogUrl || undefined };
         })
       );
 
       // Fetch YouTube and blog links for hostel meals
       const hostelMealsWithLinks = await Promise.all(
         (generatedMeals.hostelMeals || []).map(async (meal: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
             searchCookingBlog(meal.recipeSearchQuery || meal.name),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
           ]);
-          return { ...meal, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          return { ...meal, videoUrl: videoUrl || undefined, searchUrl: searchUrl || undefined, blogUrl: blogUrl || undefined };
         })
       );
 
@@ -558,11 +564,12 @@ Respond in JSON format:
       // Fetch YouTube and blog links for each festival recipe
       const recipesWithLinks = await Promise.all(
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
-          const [videoUrl, blogUrl] = await Promise.all([
+          const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(recipe.recipeSearchQuery || `${recipe.name} ${input.festival} recipe`),
             searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
+            generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festoival}`),
           ]);
-          return { ...recipe, videoUrl: videoUrl || undefined, blogUrl: blogUrl || undefined };
+          return { ...recipe, videoUrl: videoUrl || undefined, searchUrl: searchUrl || undefined, blogUrl: blogUrl || undefined };
         })
       );
 
