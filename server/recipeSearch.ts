@@ -90,9 +90,38 @@ const siteSearchMap: Record<string, string> = {
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
   "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
 };
+function resolveCuisine(recipeName: string, culture: string): string {
+  const dish = recipeName.toLowerCase();
+  const userCulture = culture?.toLowerCase() || "";
 
+  // 🍝 Dish-based detection (strong signal)
+  if (dish.match(/pasta|risotto|lasagna|pizza/)) return "italian";
+  if (dish.match(/taco|burrito|quesadilla|enchilada/)) return "mexican";
+  if (dish.match(/noodles|fried rice|dumpling|manchurian/)) return "chinese";
+  if (dish.match(/curry|dal|roti|paneer|biryani/)) return "indian";
+
+  // 🌏 fallback: user culture preference (medium signal)
+  if (userCulture.includes("indian")) return "indian";
+  if (userCulture.includes("italian")) return "italian";
+  if (userCulture.includes("mexican")) return "mexican";
+  if (userCulture.includes("chinese")) return "chinese";
+
+  // 🌐 final fallback
+  return "western";
+}
+function normalizeCuisine(recipeName: string, culture: string): string {
+  const c = culture.toLowerCase();
+
+  if (c.includes("indian")) return "indian";
+  if (c.includes("italian")) return "italian";
+  if (c.includes("mexican")) return "mexican";
+  if (c.includes("chinese")) return "chinese";
+  if (c.includes("any cuisine)
+  return "western"; // fallback
+}
 export function generateSiteSearchLinks(query: string, culture: string): string | null {
-  const cuisine = normalizeCuisine(culture);
+  
+  const cuisine = normalizeCuisine(recipeName, culture);
   const allowedSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
 
   const filteredLinks = Object.entries(siteSearchMap)
@@ -109,18 +138,7 @@ export function generateSiteSearchLinks(query: string, culture: string): string 
   const randomIndex = Math.floor(Math.random() * filteredLinks.length);
   return filteredLinks[randomIndex].url;
 }
-function normalizeCuisine(culture: string): string {
-  const c = culture.toLowerCase();
 
-  if (c.includes("indian")) return "indian";
-  if (c.includes("italian")) return "italian";
-  if (c.includes("mexican")) return "mexican";
-  if (c.includes("chinese")) return "chinese";
-  if (c.includes("thai")) return "thai";
-  if (c.includes("japanese")) return "japanese";
-
-  return "western"; // fallback
-}
 // Google Custom Search API for cooking blogs
 // Falls back to a crafted Google search URL if API fails or key missing
 function generateQueryVariants(recipeName: string) {
@@ -138,7 +156,7 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
   const variants = generateQueryVariants(recipeName);
   const currentQuery = variants[Math.min(retryCount, variants.length - 1)];
-  const cuisine = normalizeCuisine(culture);
+  const cuisine = normalizeCuisine(recipeName, culture);
   const popularCookingSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
   
   // Fallback: a Google search scoped to popular cooking sites
@@ -162,8 +180,8 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
         q: q,
         num: 10,
         safe: 'active'
-      },
-    });
+      }, 
+    }, {timeout: 5000});
 
     if (!response.data.items || response.data.items.length === 0) {
       return fallbackUrl;
@@ -310,7 +328,9 @@ function generateYouTubeQueryVariants(recipeName: string) {
 function isRelevantVideo(item: any, recipeName: string) {
   const title = item.snippet?.title?.toLowerCase() || "";
   const description = item.snippet?.description?.toLowerCase() || "";
-  const query = recipeName.toLowerCase();
+  const cuisine = resolveCuisine(recipeName, "");
+  const query = `${recipeName} ${cuisine} recipe`;
+  const query = query.toLowerCase();
 
   if (
     title.includes("compilation") ||
@@ -370,7 +390,7 @@ export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): P
           key: apiKey,
           safeSearch: 'strict',
         },
-      }
+      }, {timeout: 5000}
     );
     if (!searchResponse.data.items || searchResponse.data.items.length === 0) {
         return null;
@@ -390,7 +410,7 @@ export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): P
           id: videoIds,
           key: apiKey,
         },
-      }
+      }, {timeout: 5000}
     );
     if (!statsResponse.data.items || statsResponse.data.items.length === 0) {
       return null;
