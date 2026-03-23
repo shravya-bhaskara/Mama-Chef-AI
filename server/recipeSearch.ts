@@ -90,16 +90,24 @@ const siteSearchMap: Record<string, string> = {
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
   "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
 };
-const cuisine = normalizeCuisine(culture);
-const popularCookingSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
-export function generateSiteSearchLinks(query: string): string | null {
-  const links = Object.entries(siteSearchMap).map(([site, baseUrl]) => ({
-    site,
-    url: `${baseUrl}${encodeURIComponent(query)}`
-  }));
-  if (links.length === 0) return null;
-  const randomIndex = Math.floor(Math.random() * links.length);
-  return links[randomIndex].url;
+
+export function generateSiteSearchLinks(query: string, culture: string): string | null {
+  const cuisine = normalizeCuisine(culture);
+  const allowedSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
+
+  const filteredLinks = Object.entries(siteSearchMap)
+    .filter(([site]) =>
+      allowedSites.some(s => site === s || site.endsWith(`.${s}`))
+    )
+    .map(([site, baseUrl]) => ({
+      site,
+      url: `${baseUrl}${encodeURIComponent(query)}`
+    }));
+
+  if (filteredLinks.length === 0) return null;
+
+  const randomIndex = Math.floor(Math.random() * filteredLinks.length);
+  return filteredLinks[randomIndex].url;
 }
 function normalizeCuisine(culture: string): string {
   const c = culture.toLowerCase();
@@ -130,6 +138,8 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
   const variants = generateQueryVariants(recipeName);
   const currentQuery = variants[Math.min(retryCount, variants.length - 1)];
+  const cuisine = normalizeCuisine(culture);
+  const popularCookingSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
   
   // Fallback: a Google search scoped to popular cooking sites
   const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(
@@ -276,7 +286,7 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
 
     // 🔁 RETRY LOGIC
     if (retryCount < variants.length - 1) {
-      return searchCookingBlog(recipeName, retryCount + 1);
+      return searchCookingBlog(recipeName, culture, retryCount + 1);
     }
 
     // fallback
