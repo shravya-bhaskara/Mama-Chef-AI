@@ -152,7 +152,7 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
   try {
 
 
-    const siteQuery = sites.map(site => `site:${site}`).join(" OR ");
+    const siteQuery = popularCookingSites.map(site => `site:${site}`).join(" OR ");
 
     const q = `${recipeName} recipe (${siteQuery})`;
     const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
