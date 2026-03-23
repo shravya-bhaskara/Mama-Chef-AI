@@ -429,7 +429,7 @@ export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): P
 
     return `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
   } catch (error: any) {
-    return `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
+    return null
   }
 }
 
