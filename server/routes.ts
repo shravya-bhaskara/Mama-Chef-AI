@@ -329,6 +329,7 @@ Seed: ${seed};
                   ...meal,
                   videoUrl: videoUrl || undefined,
                   recipeUrl: recipeUrl || undefined,
+                  recipeFrom
                 };
               }
             }
