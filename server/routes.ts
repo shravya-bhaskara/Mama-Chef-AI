@@ -300,17 +300,19 @@ Seed: ${seed};
       }
 
       const generatedPlan = JSON.parse(responseContent);
-      const culture = input.preferences.culture || "indian";
 
       // Fetch YouTube links for dinners (one per day to keep API calls manageable)
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       const enrichedWeekPlan = { ...generatedPlan.weekPlan };
+      const culture = input.preferences.culture || "indian";
       await Promise.all(
         days.map(async (day) => {
           if (enrichedWeekPlan[day]) {
             const meals = ['breakfast', 'lunch', 'dinner', 'snacks'];
             for (const mealType of meals) {
               const meal = enrichedWeekPlan[day][mealType];
+              
+
               if (meal?.recipeSearchQuery) {
                 const [videoUrl, searchUrl, blogUrl] = await Promise.all([
                   searchYouTubeRecipe(meal.recipeSearchQuery),
@@ -459,7 +461,7 @@ Seed: ${seed}
       }
 
       const generatedMeals = JSON.parse(responseContent);
-
+      const culture = input.preference.culture || "indian";
       // Fetch YouTube and blog links for each quick meal
       const quickMealsWithLinks = await Promise.all(
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
@@ -633,7 +635,7 @@ Seed: ${seed}
       }
 
       const generatedRecipes = JSON.parse(responseContent);
-
+      const culture = input.preference.culture || "indian";
       // Fetch YouTube and blog links for each festival recipe
       const recipesWithLinks = await Promise.all(
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
