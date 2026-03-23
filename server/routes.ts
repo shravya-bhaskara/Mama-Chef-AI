@@ -119,14 +119,15 @@ Seed: ${seed}
       }
 
       const generatedData = JSON.parse(responseContent);
+      const culture = input.preferences.culture || "indian";
 
       // Fetch YouTube videos and blog URLs for each suggestion
       const suggestionsWithLinks = await Promise.all(
         generatedData.suggestions.map(async (suggestion: any) => {
           const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(suggestion.recipeSearchQuery),
-            searchCookingBlog(suggestion.recipeSearchQuery),
-            generateSiteSearchLinks(suggestion.recipeSearchQuery),
+            searchCookingBlog(suggestion.recipeSearchQuery, culture),
+            generateSiteSearchLinks(suggestion.recipeSearchQuery, culture),
           ]);
           let recipeUrl: string | null = null;
           let recipeFrom: string | null = null;
@@ -299,6 +300,7 @@ Seed: ${seed};
       }
 
       const generatedPlan = JSON.parse(responseContent);
+      const culture = input.preferences.culture || "indian";
 
       // Fetch YouTube links for dinners (one per day to keep API calls manageable)
       const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -312,8 +314,8 @@ Seed: ${seed};
               if (meal?.recipeSearchQuery) {
                 const [videoUrl, searchUrl, blogUrl] = await Promise.all([
                   searchYouTubeRecipe(meal.recipeSearchQuery),
-                  searchCookingBlog(meal.recipeSearchQuery),
-                  generateSiteSearchLinks(meal.recipeSearchQuery),
+                  searchCookingBlog(meal.recipeSearchQuery, culture),
+                  generateSiteSearchLinks(meal.recipeSearchQuery, culture),
                 ]);
                 let recipeUrl: string | null = null;
                 let recipeFrom: string | null = null;
@@ -463,8 +465,8 @@ Seed: ${seed}
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
           const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
-            searchCookingBlog(meal.recipeSearchQuery || meal.name),
-            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
+            searchCookingBlog(meal.recipeSearchQuery || meal.name, culture),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name, culture),
           ]);
           let recipeUrl: string | null = null;
           let recipeFrom: string | null = null;
@@ -487,8 +489,8 @@ Seed: ${seed}
         (generatedMeals.hostelMeals || []).map(async (meal: any) => {
           const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(meal.recipeSearchQuery || meal.name),
-            searchCookingBlog(meal.recipeSearchQuery || meal.name),
-            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name),
+            searchCookingBlog(meal.recipeSearchQuery || meal.name, culture),
+            generateSiteSearchLinks(meal.recipeSearchQuery || meal.name, culture),
           ]);
           let recipeUrl: string | null = null;
           let recipeFrom: string | null = null;
@@ -637,8 +639,8 @@ Seed: ${seed}
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
           const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(recipe.recipeSearchQuery || `${recipe.name} ${input.festival} recipe`),
-            searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
-            generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`),
+            searchCookingBlog(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`, culture),
+            generateSiteSearchLinks(recipe.recipeSearchQuery || `${recipe.name} ${input.festival}`, culture),
           ]);
           let recipeUrl: string | null = null;
           let recipeFrom: string | null = null;
