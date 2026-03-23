@@ -1,64 +1,5 @@
 import axios from 'axios';
 
-// YouTube Data API v3 search
-export async function searchYouTubeRecipe(query: string): Promise<string | null> {
-  const apiKey = process.env.YOUTUBE_API_KEY;
-  
-  if (!apiKey) {
-    console.warn('YouTube API key not configured');
-    return null;
-  }
-
-  try {
-    // Search for videos with the recipe query
-    const searchResponse = await axios.get('https://www.googleapis.com/youtube/v3/search', {
-      params: {
-        part: 'snippet',
-        q: query,
-        type: 'video',
-        videoCategoryId: '26', // Howto & Style category
-        maxResults: 5,
-        order: 'relevance', // Most relevant first
-        key: apiKey,
-      },
-    });
-
-    if (!searchResponse.data.items || searchResponse.data.items.length === 0) {
-      return null;
-    }
-
-    // Get video IDs to fetch statistics
-    const videoIds = searchResponse.data.items.map((item: any) => item.id.videoId).join(',');
-    
-    // Fetch video statistics (views, likes)
-    const statsResponse = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
-      params: {
-        part: 'statistics,contentDetails',
-        id: videoIds,
-        key: apiKey,
-      },
-    });
-
-    if (!statsResponse.data.items || statsResponse.data.items.length === 0) {
-      return null;
-    }
-
-    // Sort by view count (most viewed first)
-    const sortedVideos = statsResponse.data.items.sort((a: any, b: any) => {
-      const viewsA = parseInt(a.statistics.viewCount || '0');
-      const viewsB = parseInt(b.statistics.viewCount || '0');
-      return viewsB - viewsA;
-    });
-
-    // Return the most popular video URL
-    const topVideo = sortedVideos[0];
-    return `https://www.youtube.com/watch?v=${topVideo.id}`;
-  } catch (error: any) {
-    console.error('YouTube API error:', error.response?.data || error.message);
-    return null;
-  }
-}
-
 const popularCookingSites = [
   "krumpli.co.uk",
   "family-friends-food.com",
@@ -138,7 +79,10 @@ const siteSearchMap: Record<string, string> = {
   "sanjeevkapoor.com": "https://www.sanjeevkapoor.com/search?title=",
   "mallikabasu.com": "https://mallikabasu.com/?s=",
   "ministryofcurry.com": "https://ministryofcurry.com/#search/q=",
-  "theitaliandishblog.com": "https://www.theitaliandishblog.com/search?q="
+  "theitaliandishblog.com": "https://www.theitaliandishblog.com/search?q=",
+  "archanaskitchen.com": "https://www.archanaskitchen.com/search?q=",
+  "madewithlau.com": "https://www.madewithlau.com/recipes/",
+  "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
 };
 
 export function generateSiteSearchLinks(query: string): string | null {
@@ -151,184 +95,98 @@ export function generateSiteSearchLinks(query: string): string | null {
   return links[randomIndex].url;
 }
 
-function isRelevantResult(item: any, query: string): boolean {
-  const title = item.title?.toLowerCase() || "";
-  const snippet = item.snippet?.toLowerCase() || "";
-  const link = item.link?.toLowerCase() || "";
-  const q = query.toLowerCase();
-
-  // Bad signals — skip search/listing pages
-  if (title.includes("search") || snippet.includes("no results")) {
-    return false;
-  }
-
-  // URL looks like a dedicated recipe page
-  if (link.includes("/recipe") || link.includes("-recipe")) {
-    return true;
-  }
-
-  // Strong title match
-  if (title.includes(q)) return true;
-
-  // Partial keyword match (at least half the words match)
-  const words = q.split(" ");
-  const matchCount = words.filter(word => title.includes(word)).length;
-  if (matchCount >= Math.ceil(words.length / 2)) {
-    return true;
-  }
-
-  // Recipe-like snippet content
-  if (
-    snippet.includes("ingredients") ||
-    snippet.includes("instructions") ||
-    snippet.includes("how to make")
-  ) {
-    return true;
-  }
-
-  return false;
-}
-
 // Google Custom Search API for cooking blogs
 // Falls back to a crafted Google search URL if API fails or key missing
-export async function searchCookingBlog(query: string): Promise<string | null> {
+function generateQueryVariants(recipeName: string) {
+  return [
+    recipeName,
+    `${recipeName} recipe`,
+    `${recipeName} easy recipe`,
+    `${recipeName} homemade`,
+    `${recipeName} how to make`,
+  ];
+
+}
+export async function searchCookingBlog(recipeName: string, retryCount = 0): Promise<string | null> {
   const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
-
+  const variants = generateQueryVariants(recipeName);
+  const currentQuery = variants[Math.min(retryCount, variants.length - 1)];
+  
   // Fallback: a Google search scoped to popular cooking sites
-  const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(query + ' recipe site:allrecipes.com OR site:bbcgoodfood.com OR site:simplyrecipes.com OR site:epicurious.com')}`;
-
+  const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(
+    `${recipeName} recipe (${popularCookingSites.map(s => `site:${s}`).join(" OR ")})`
+  )}&safe=active`;  
   if (!apiKey || !searchEngineId) {
     return fallbackUrl;
   }
 
   try {
+    const siteQuery = popularCookingSites.map(site => `site:${site}`).join(" OR ");
+    const q = `${currentQuery} (${siteQuery})`;
     const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
       params: {
         key: apiKey,
         cx: searchEngineId,
-        q: `${query} recipe`,
-        num: 5,
+        q: q,
+        num: 10,
+        safe: 'active'
       },
     });
 
     if (!response.data.items || response.data.items.length === 0) {
       return fallbackUrl;
     }
-
-    const validLinks: string[] = [];
-    const popularCookingSites = [
-      "krumpli.co.uk",
-      "family-friends-food.com",
-      "saveur.com",
-      "thetinytaster.com",
-      "tastefoodblog.com",
-      "archanaskitchen.com",
-      "stefangourmet.com",
-      "foodperestroika.com",
-      "eatingeuropean.com",
-      "foodnetwork.com",
-      "bonappetit.com",
-      "chewingthefat.us.com",
-      "seriouseats.com",
-      "chicanoeats.com",
-      "isabeleats.com",
-      "holajalapeno.com",
-      "molemama.com",
-      "mexicanplease.com",
-      "madewithlau.com",
-      "eatchofood.com",
-      "omnivorescookbook.com",
-      "redhousespice.com",
-      "thewoksoflife.com",
-      "hebbarskitchen.com",
-      "tarladalal.com",
-      "giallozafferano.com",
-      "nonnabox.com",
-      "pinabresciani.com",
-      "italianfoodforever.com",
-      "insidetherustickitchen.com",
-      "italianhomecooking.co.uk",
-      "indianhealthyrecipes.com",
-      "smittenkitchen.com",
-      "pinchofyum.com",
-      "ranveerbrar.com",
-      "sanjeevkapoor.com",
-      "mallikabasu.com",
-      "ministryofcurry.com",
-      "manjulaskitchen.com",
-      "theitaliandishblog.com"
-    ];
-
-    const siteSearchMap: Record<string, string> = {
-      "krumpli.co.uk": "https://www.krumpli.co.uk/#growMeSearch=",
-      "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
-      "seriouseats.com": "https://www.seriouseats.com/search?q=",
-      "foodnetwork.com": "https://www.foodnetwork.com/search/",
-      "family-friends-food.com": "https://family-friends-food.com/#growMeSearch=",
-      "saveur.com": "https://www.saveur.com/#gsc.tab=0&gsc.q=",
-      "thetinytaster.com": "https://www.thetinytaster.com/?s=",
-      "tastefoodblog.com": "https://tastefoodblog.com/?s=", 
-      "stefangourmet.com": "https://stefangourmet.com/?s=",
-      "foodperestroika.com": "https://foodperestroika.com/?s=",
-      "eatingeuropean.com": "https://eatingeuropean.com/?s=",
-      "www.bonappetit.com": "https://www.bonappetit.com/search?q=",
-      "chewingthefat.us.com": "https://chewingthefat.us.com/?s=",
-      "seriouseats.com": "https://www.seriouseats.com/search?q=",
-      "chicanoeats.com": "https://chicanoeats.com/?s=",
-      "isabeleats.com": "https://www.isabeleats.com/#search/q=", 
-      "holajalapeno.com": "https://www.holajalapeno.com/#search/q=", 
-      "molemama.com": "https://www.molemama.com/search?q=", 
-      "mexicanplease.com": "https://www.mexicanplease.com/?s=", 
-      "eatchofood.com": "https://eatchofood.com/search?q=",
-      "omnivorescookbook.com": "https://omnivorescookbook.com/?s=",
-      "redhousespice.com": "https://redhousespice.com/#search/q=",
-      "tarladalal.com": "https://www.tarladalal.com/recipesearch/?query=",
-      "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
-      "thewoksoflife.com": "https://thewoksoflife.com/#search/q=",
-      "giallozafferano.com": "https://www.giallozafferano.com/recipes-search/",
-      "nonnabox.com": "https://www.nonnabox.com/?s=bell",
-      "italianfoodforever.com": "https://italianfoodforever.com/?s=",
-      "italianhomecooking.co.uk": "https://italianhomecooking.co.uk/?s=",
-      "pinabresciani.com": "https://pinabresciani.com/?s=",
-      "italianhomecooking.co.uk": "https://italianhomecooking.co.uk/?s=",
-      "smittenkitchen.com": "https://smittenkitchen.com/?s=",
-      "indianhealthyrecipes.com": "https://www.indianhealthyrecipes.com/?s=",
-      "pinchofyum.com": "https://pinchofyum.com/?s=#search/q=",
-      "ranveerbrar.com": "https://ranveerbrar.com/?s=",
-      "sanjeevkapoor.com": "https://www.sanjeevkapoor.com/search?title=",
-      "mallikabasu.com": "https://mallikabasu.com/?s=",
-      "ministryofcurry.com": "https://ministryofcurry.com/#search/q=",
-      "theitaliandishblog.com": "https://www.theitaliandishblog.com/search?q="
-};
-
-    function generateSiteSearchLinks(query: string) {
-      return Object.entries(siteSearchMap).map(([site, baseUrl]) => {
-        return {
-          site,
-          url: `${baseUrl}${encodeURIComponent(query)}`
-        };
-      });
-    }
+    
     function isRelevantResult(item: any, recipeName: string) {
       const title = item.title?.toLowerCase() || "";
       const snippet = item.snippet?.toLowerCase() || "";
-      const query = recipeName.toLowerCase();
+      const link = item.link?.toLowerCase() || "";
+      const normalizedQuery = recipeName.toLowerCase();
 
-      // ❌ obvious bad signals
-      if (title.includes("search") || snippet.includes("no results")) {
+      // ❌ bad signals
+      if (
+        title.includes("search") ||
+        snippet.includes("no results") ||
+        snippet.includes("not found") ||
+        snippet.includes("0 results") ||
+        snippet.includes("did not match")
+      ) {
+        return false;
+      }
+      if (
+        (link.includes("/category/") ||
+        link.includes("/tag/") ||
+        link.includes("/search")) && 
+        (!link.includes("/recipe") &&
+         !link.includes("-recipe") &&
+         !link.includes("/recipes/"))
+      ) {
         return false;
       }
 
-      // ✅ URL looks like a recipe (ADD HERE)
-      if (link.includes("/recipe") || link.includes("-recipe")) {
+      // ✅ URL looks like recipe
+      if (
+        link.includes("/recipe") ||
+        link.includes("-recipe") ||
+        link.includes("/recipes/") 
+      ) {
         return true;
       }
-      // ✅ strong match
-      if (title.includes(query)) return true;
 
-      // ✅ partial match (keywords)
-      const words = query.split(" ");
+      // ✅ strong match
+      if (
+        title.includes(normalizedQuery) &&
+        !snippet.includes("no results") &&
+        !snippet.includes("not found") &&
+        !snippet.includes("0 results") &&
+        !snippet.includes("did not match")
+      ) {
+        return true;
+      }
+
+      // ✅ partial match
+      const words = normalizedQuery.split(" ");
       const matchCount = words.filter(word => title.includes(word)).length;
 
       if (matchCount >= Math.ceil(words.length / 2)) {
@@ -339,59 +197,207 @@ export async function searchCookingBlog(query: string): Promise<string | null> {
       if (
         snippet.includes("ingredients") ||
         snippet.includes("instructions") ||
-        snippet.includes("how to make")
+        snippet.includes("how to make") || 
+        snippet.includes("method") || 
+        snippet.includes("steps") ||
+        snippet.includes("cook") || 
+        snippet.includes("cooking")
       ) {
         return true;
       }
 
       return false;
     }
-    for (const item of response.data.items) {
+    const validLinks: string[] = [];
+
+    for (const item of response.data.items || []) {
       try {
-        const domain = new URL(item.link).hostname.replace('www.', '');
-        if (popularCookingSites.some(site => domain.includes(site))) {
-          const validLinks: string[] = [];
+        const link = item.link;
+        const domain = new URL(link).hostname.replace("www.", "");
 
-        for (const item of response.data.items || []) {
-          const link = item.link;
-          const domain = new URL(link).hostname;
-
-          // ✅ Only allowed sites
-          if (!allowedSites.some(site => domain.includes(site))) {
-            continue;
-          }
-
-          // ✅ Only relevant results
-          if (!isRelevantResult(item, recipeName)) {
-            continue;
-          }
-
-          validLinks.push(link);
-        }
-          if (validLinks.length > 0) {
-            const randomIndex = Math.floor(Math.random() * validLinks.length);
-            return validLinks[randomIndex];
-          }
-          
-        }
-
-        // Only include relevant recipe results
-        if (!isRelevantResult(item, query)) {
+        // ✅ Only allowed sites
+        if (!popularCookingSites.some(site => domain === site || domain.endsWith(`.${site}`))) {
           continue;
         }
 
-        validLinks.push(item.link);
-      } catch {}
+        // ✅ Only relevant results
+        if (!isRelevantResult(item, recipeName)) {
+          continue;
+        }
+
+        validLinks.push(link);
+      } 
+      catch (e){
+        continue;
+      }
     }
 
+    // ✅ RANDOM SELECTION
     if (validLinks.length > 0) {
-      const randomIndex = Math.floor(Math.random() * validLinks.length);
-      return validLinks[randomIndex];
+      const grouped: Record<string, string[]> = {};
+
+      for (const link of validLinks) {
+        const domain = new URL(link).hostname.replace("www.", "");
+        if (!grouped[domain]) grouped[domain] = [];
+          grouped[domain].push(link);
+      }
+
+      const domains = Object.keys(grouped);
+      if (domains.length === 0) {
+        return fallbackUrl;
+      }
+      const randomDomain = domains[Math.floor(Math.random() * domains.length)];
+      const linksFromDomain = grouped[randomDomain];
+
+      return linksFromDomain[Math.floor(Math.random() * linksFromDomain.length)];
     }
 
-    return response.data.items[0].link || null;
+    // 🔁 RETRY LOGIC
+    if (retryCount < variants.length - 1) {
+      return searchCookingBlog(recipeName, retryCount + 1);
+    }
+
+    // fallback
+    return fallbackUrl;
   } catch (error: any) {
     console.error('Google Search API error:', error.response?.data || error.message);
     return fallbackUrl;
   }
 }
+function generateYouTubeQueryVariants(recipeName: string) {
+  return [
+    `${recipeName} recipe`,
+    `${recipeName} how to make`,
+    `${recipeName} easy recipe`,
+    `${recipeName} step by step`,
+    `${recipeName} cooking`,
+    `best ${recipeName} recipe`,
+  ];
+}
+
+function isRelevantVideo(item: any, recipeName: string) {
+  const title = item.snippet?.title?.toLowerCase() || "";
+  const description = item.snippet?.description?.toLowerCase() || "";
+  const query = recipeName.toLowerCase();
+
+  if (
+    title.includes("compilation") ||
+    title.includes("shorts")      ||
+    title.includes("#shorts")     ||
+    title.length < 3              ||  
+    title.includes("asmr")        ||
+    title.includes("mukbang")     ||
+    title.includes("tiktok")      ||
+    title.includes("reels")       ||
+    title.includes("viral")
+  ) {
+    return false;
+  }
+
+  if (title.includes(query)) return true;
+
+  const words = query.split(" ");
+  const matchCount = words.filter(word => title.includes(word)).length;
+
+  if (matchCount >= Math.ceil(words.length / 2)) return true;
+
+  if (
+    title.includes("recipe") ||
+    title.includes("how to make") ||
+    description.includes("ingredients") ||
+    description.includes("step by step") ||
+    description.includes("procedure") || 
+    description.includes("process")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): Promise<string | null> {
+  const apiKey = process.env.YOUTUBE_API_KEY;
+
+  if (!apiKey) return null;
+
+  const variants = generateYouTubeQueryVariants(recipeName);
+  const shuffled = [...variants].sort(() => 0.5 - Math.random());
+  const query = shuffled[Math.min(retryCount, shuffled.length - 1)];
+  
+  try {
+    const searchResponse = await axios.get(
+      'https://www.googleapis.com/youtube/v3/search',
+      {
+        params: {
+          part: 'snippet',
+          q: query,
+          type: 'video',
+          videoCategoryId: '26',
+          maxResults: 10,
+          videoDuration: 'medium',
+          key: apiKey,
+          safeSearch: 'strict',
+        },
+      }
+    );
+    if (!searchResponse.data.items || searchResponse.data.items.length === 0) {
+        return null;
+    }
+
+    const videoIds = searchResponse.data.items
+      .map((item: any) => item.id.videoId)
+      .filter(Boolean)
+      .join(',');
+    if (!videoIds) return null;
+    
+    const statsResponse = await axios.get(
+      'https://www.googleapis.com/youtube/v3/videos',
+      {
+        params: {
+          part: 'statistics',
+          id: videoIds,
+          key: apiKey,
+        },
+      }
+    );
+    if (!statsResponse.data.items || statsResponse.data.items.length === 0) {
+      return null;
+    }
+    const videoMap = new Map(
+      searchResponse.data.items.map((item: any) => [item.id.videoId, item])
+    );
+
+    const enrichedVideos = statsResponse.data.items.map((video: any) => {
+      const original = videoMap.get(video.id);
+      const views = parseInt(video.statistics?.viewCount || '0');
+      const likes = parseInt(video.statistics?.likeCount || '0');
+      const engagement = likes / (views || 1);
+      return {
+        id: video.id,
+        score: Math.log10(views + 1) * 0.7 + engagement * 30,
+        item: original,
+      };
+    });
+
+    const validVideos = enrichedVideos.filter(v =>
+      v.item && isRelevantVideo(v.item, recipeName)
+    );
+
+    if (validVideos.length > 0) {
+      validVideos.sort((a, b) => b.score - a.score);
+      const top = validVideos.slice(0, Math.min(3, validVideos.length));
+      const selected = top[Math.floor(Math.random() * top.length)];
+
+      return `https://www.youtube.com/watch?v=${selected.id}`;
+    }
+
+    if (retryCount < variants.length - 1) {
+      return searchYouTubeRecipe(recipeName, retryCount + 1);
+    }
+
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
+  } catch (error: any) {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
+  }
+}
+
