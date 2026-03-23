@@ -47,20 +47,14 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to fetch recipe" });
     }
   });
-  export async function POST(req: Request) {
-    const body = await req.json();
-
-    const recipeName = body.recipeName;
-    const culture = body.culture; // ✅ already coming from user
+  app.post("/api/recipe-links", async (req, res) => {
+    const { recipeName, culture } = req.body;
 
     const blogLink = await searchCookingBlog(recipeName, culture);
     const youtubeLink = await searchYouTubeRecipe(recipeName);
 
-    return Response.json({
-      blogLink,
-      youtubeLink
-    });
-  }
+    res.json({ blogLink, youtubeLink });
+  });
   app.post(api.recipes.create.path, async (req, res) => {
     try {
       if (!openai) {
@@ -461,7 +455,7 @@ Seed: ${seed}
       }
 
       const generatedMeals = JSON.parse(responseContent);
-      const culture = input.preference.culture || "indian";
+      const culture = input.preferences.culture || "indian";
       // Fetch YouTube and blog links for each quick meal
       const quickMealsWithLinks = await Promise.all(
         (generatedMeals.quickMeals || []).map(async (meal: any) => {
@@ -635,7 +629,7 @@ Seed: ${seed}
       }
 
       const generatedRecipes = JSON.parse(responseContent);
-      const culture = input.preference.culture || "indian";
+      const culture = input.preferences.culture || "indian";
       // Fetch YouTube and blog links for each festival recipe
       const recipesWithLinks = await Promise.all(
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
