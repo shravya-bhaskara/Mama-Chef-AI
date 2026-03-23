@@ -116,7 +116,7 @@ function normalizeCuisine(recipeName: string, culture: string): string {
   if (c.includes("italian")) return "italian";
   if (c.includes("mexican")) return "mexican";
   if (c.includes("chinese")) return "chinese";
-  if (c.includes("any cuisine)
+  if (c.includes("any cuisine")) return "western";
   return "western"; // fallback
 }
 export function generateSiteSearchLinks(query: string, culture: string): string | null {
