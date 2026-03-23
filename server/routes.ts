@@ -47,7 +47,20 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to fetch recipe" });
     }
   });
+  export async function POST(req: Request) {
+    const body = await req.json();
 
+    const recipeName = body.recipeName;
+    const culture = body.culture; // ✅ already coming from user
+
+    const blogLink = await searchCookingBlog(recipeName, culture);
+    const youtubeLink = await searchYouTubeRecipe(recipeName);
+
+    return Response.json({
+      blogLink,
+      youtubeLink
+    });
+  }
   app.post(api.recipes.create.path, async (req, res) => {
     try {
       if (!openai) {
