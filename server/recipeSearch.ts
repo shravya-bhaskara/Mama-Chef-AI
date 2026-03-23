@@ -1,47 +1,53 @@
 import axios from 'axios';
+culturalPreference: string
+const culturalSiteMap: Record<string, string[]> = {
+  indian: [
+    "hebbarskitchen.com",
+    "tarladalal.com",
+    "indianhealthyrecipes.com",
+    "ranveerbrar.com",
+    "sanjeevkapoor.com",
+    "archanaskitchen.com",
+    "manjulaskitchen.com",
+    "ministryofcurry.com",
+    "mallikabasu.com"
+  ],
 
-const popularCookingSites = [
-  "krumpli.co.uk",
-  "family-friends-food.com",
-  "saveur.com",
-  "thetinytaster.com",
-  "tastefoodblog.com",
-  "archanaskitchen.com",
-  "stefangourmet.com",
-  "foodperestroika.com",
-  "eatingeuropean.com",
-  "foodnetwork.com",
-  "bonappetit.com",
-  "chewingthefat.us.com",
-  "seriouseats.com",
-  "chicanoeats.com",
-  "isabeleats.com",
-  "holajalapeno.com",
-  "molemama.com",
-  "mexicanplease.com",
-  "madewithlau.com",
-  "eatchofood.com",
-  "omnivorescookbook.com",
-  "redhousespice.com",
-  "thewoksoflife.com",
-  "hebbarskitchen.com",
-  "tarladalal.com",
-  "giallozafferano.com",
-  "nonnabox.com",
-  "pinabresciani.com",
-  "italianfoodforever.com",
-  "insidetherustickitchen.com",
-  "italianhomecooking.co.uk",
-  "indianhealthyrecipes.com",
-  "smittenkitchen.com",
-  "pinchofyum.com",
-  "ranveerbrar.com",
-  "sanjeevkapoor.com",
-  "mallikabasu.com",
-  "ministryofcurry.com",
-  "manjulaskitchen.com",
-  "theitaliandishblog.com"
-];
+  italian: [
+    "giallozafferano.com",
+    "nonnabox.com",
+    "italianfoodforever.com",
+    "insidetherustickitchen.com",
+    "pinabresciani.com",
+    "theitaliandishblog.com",
+    "italianhomecooking.co.uk"
+  ],
+
+  mexican: [
+    "mexicanplease.com",
+    "molemama.com",
+    "holajalapeno.com",
+    "isabeleats.com",
+    "chicanoeats.com"
+  ],
+
+  chinese: [
+    "thewoksoflife.com",
+    "omnivorescookbook.com",
+    "redhousespice.com",
+    "madewithlau.com",
+    "eatchofood.com"
+  ],
+
+  western: [
+    "seriouseats.com",
+    "foodnetwork.com",
+    "bonappetit.com",
+    "smittenkitchen.com",
+    "pinchofyum.com",
+    "saveur.com"
+  ]
+};
 
 const siteSearchMap: Record<string, string> = {
   "krumpli.co.uk": "https://www.krumpli.co.uk/#growMeSearch=",
@@ -84,7 +90,8 @@ const siteSearchMap: Record<string, string> = {
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
   "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
 };
-
+const cuisine = normalizeCuisine(culture);
+const popularCookingSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
 export function generateSiteSearchLinks(query: string): string | null {
   const links = Object.entries(siteSearchMap).map(([site, baseUrl]) => ({
     site,
@@ -94,7 +101,18 @@ export function generateSiteSearchLinks(query: string): string | null {
   const randomIndex = Math.floor(Math.random() * links.length);
   return links[randomIndex].url;
 }
+function normalizeCuisine(culture: string): string {
+  const c = culture.toLowerCase();
 
+  if (c.includes("indian")) return "indian";
+  if (c.includes("italian")) return "italian";
+  if (c.includes("mexican")) return "mexican";
+  if (c.includes("chinese")) return "chinese";
+  if (c.includes("thai")) return "thai";
+  if (c.includes("japanese")) return "japanese";
+
+  return "western"; // fallback
+}
 // Google Custom Search API for cooking blogs
 // Falls back to a crafted Google search URL if API fails or key missing
 function generateQueryVariants(recipeName: string) {
@@ -107,7 +125,7 @@ function generateQueryVariants(recipeName: string) {
   ];
 
 }
-export async function searchCookingBlog(recipeName: string, retryCount = 0): Promise<string | null> {
+export async function searchCookingBlog(recipeName: string, culture: string, retryCount = 0): Promise<string | null> {
   const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
   const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
   const variants = generateQueryVariants(recipeName);
@@ -122,8 +140,11 @@ export async function searchCookingBlog(recipeName: string, retryCount = 0): Pro
   }
 
   try {
-    const siteQuery = popularCookingSites.map(site => `site:${site}`).join(" OR ");
-    const q = `${currentQuery} (${siteQuery})`;
+
+
+    const siteQuery = sites.map(site => `site:${site}`).join(" OR ");
+
+    const q = `${recipeName} recipe (${siteQuery})`;
     const response = await axios.get('https://www.googleapis.com/customsearch/v1', {
       params: {
         key: apiKey,
@@ -216,6 +237,7 @@ export async function searchCookingBlog(recipeName: string, retryCount = 0): Pro
         const domain = new URL(link).hostname.replace("www.", "");
 
         // ✅ Only allowed sites
+        
         if (!popularCookingSites.some(site => domain === site || domain.endsWith(`.${site}`))) {
           continue;
         }
