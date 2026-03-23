@@ -1,5 +1,5 @@
 import axios from 'axios';
-culturalPreference: string
+
 const culturalSiteMap: Record<string, string[]> = {
   indian: [
     "hebbarskitchen.com",
