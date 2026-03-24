@@ -90,27 +90,32 @@ const siteSearchMap: Record<string, string> = {
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
   "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
 };
-function resolveCuisine(recipeName: string, culture: string): string {
+function resolveCuisine(recipeName: string, culture: string = ""): string {
   const dish = recipeName.toLowerCase();
   const userCulture = culture?.toLowerCase() || "";
 
-  // 🍝 Dish-based detection (strong signal)
-  if (dish.match(/pasta|risotto|lasagna|pizza/)) return "italian";
-  if (dish.match(/taco|burrito|quesadilla|enchilada/)) return "mexican";
-  if (dish.match(/noodles|fried rice|dumpling|manchurian/)) return "chinese";
-  if (dish.match(/curry|dal|roti|paneer|biryani/)) return "indian";
+  // 🍝 Italian
+  if (dish.match(/pasta|risotto|lasagna|pizza|alfredo|carbonara/)) return "italian";
 
-  // 🌏 fallback: user culture preference (medium signal)
+  // 🌮 Mexican
+  if (dish.match(/taco|burrito|quesadilla|enchilada|guacamole/)) return "mexican";
+
+  // 🥡 Chinese
+  if (dish.match(/noodles|fried rice|dumpling|manchurian|spring roll/)) return "chinese";
+
+  // 🍛 Indian
+  if (dish.match(/curry|dal|roti|paneer|biryani|masala|sabzi/)) return "indian";
+
+  // 🌏 fallback: user culture
   if (userCulture.includes("indian")) return "indian";
   if (userCulture.includes("italian")) return "italian";
   if (userCulture.includes("mexican")) return "mexican";
   if (userCulture.includes("chinese")) return "chinese";
 
-  // 🌐 final fallback
   return "western";
 }
-function normalizeCuisine(recipeName: string, culture: string): string {
-  const c = culture.toLowerCase();
+function normalizeCuisine(recipeName: string, culture: string = ""): string {
+  const c = culture?.toLowerCase() || "";
 
   if (c.includes("indian")) return "indian";
   if (c.includes("italian")) return "italian";
@@ -120,8 +125,7 @@ function normalizeCuisine(recipeName: string, culture: string): string {
   return "western"; // fallback
 }
 export function generateSiteSearchLinks(query: string, culture: string): string | null {
-  
-  const cuisine = normalizeCuisine(recipeName, culture);
+  const cuisine = normalizeCuisine(query, culture);
   const allowedSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
 
   const filteredLinks = Object.entries(siteSearchMap)
@@ -329,8 +333,7 @@ function isRelevantVideo(item: any, recipeName: string) {
   const title = item.snippet?.title?.toLowerCase() || "";
   const description = item.snippet?.description?.toLowerCase() || "";
   const cuisine = resolveCuisine(recipeName, "");
-  const query = `${recipeName} ${cuisine} recipe`;
-  const query = query.toLowerCase();
+  const query = `${recipeName} ${cuisine} recipe`.toLowerCase();
 
   if (
     title.includes("compilation") ||
