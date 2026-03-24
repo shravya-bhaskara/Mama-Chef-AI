@@ -92,7 +92,7 @@ const siteSearchMap: Record<string, string> = {
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
   "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q=",
   "vegrecipesofindia.com": "https://www.vegrecipesofindia.com/#search/q=",
-  "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
+  "hebbarskitchen.com": "https://hebbarskitchen.com/?s="
   
 };
 function resolveCuisine(recipeName: string, culture: string = ""): string {
