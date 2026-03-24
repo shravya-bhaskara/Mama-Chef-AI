@@ -1,6 +1,13 @@
 import axios from 'axios';
-const blogCache = new Map<string, string | null>();
-const youtubeCache = new Map<string, string | null>();
+type CacheEntry = {
+  value: string | null;
+  expiry: number;
+};
+
+const blogCache = new Map<string, CacheEntry>();
+const youtubeCache = new Map<string, CacheEntry>();
+
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
 const culturalSiteMap: Record<string, string[]> = {
   indian: [
@@ -171,9 +178,11 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
 
   const cacheKey = `${recipeName.toLowerCase()}-${culture.toLowerCase()}`;
 
-  // ✅ 1. Check cache FIRST
-  if (blogCache.has(cacheKey)) {
-    return blogCache.get(cacheKey)!;
+  // ✅ TTL check
+  const cached = blogCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    console.log("BLOG CACHE HIT:", cacheKey);
+    return cached.value;
   }
   
   // Fallback: a Google search scoped to popular cooking sites
@@ -318,8 +327,10 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
       const randomDomain = domains[Math.floor(Math.random() * domains.length)];
       const linksFromDomain = grouped[randomDomain];
       const result = linksFromDomain[Math.floor(Math.random() * linksFromDomain.length)];
-      // ✅ Before returning final result:
-      blogCache.set(cacheKey, result);
+      blogCache.set(cacheKey, {
+        value: result,
+        expiry: Date.now() + CACHE_TTL,
+      });
       return result
 
     }
@@ -328,11 +339,16 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
     if (retryCount < variants.length - 1) {
       return searchCookingBlog(recipeName, culture, retryCount + 1);
     }
+    blogCache.set(cacheKey, {
+      value: fallbackUrl,
+      expiry: Date.now() + CACHE_TTL,
+    });
 
     // fallback
     return fallbackUrl;
   } catch (error: any) {
     console.error('Google Search API error:', error.response?.data || error.message);
+    
     return fallbackUrl;
   }
 }
@@ -396,7 +412,13 @@ export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): P
   const variants = generateYouTubeQueryVariants(recipeName);
   const shuffled = [...variants].sort(() => 0.5 - Math.random());
   const query = shuffled[Math.min(retryCount, shuffled.length - 1)];
-  
+  const cacheKey = recipeName.toLowerCase();
+
+  const cached = youtubeCache.get(cacheKey);
+  if (cached && cached.expiry > Date.now()) {
+    console.log("YOUTUBE CACHE HIT:", cacheKey);
+    return cached.value;
+  }
   try {
     const searchResponse = await axios.get(
       'https://www.googleapis.com/youtube/v3/search',
@@ -461,14 +483,27 @@ export async function searchYouTubeRecipe(recipeName: string, retryCount = 0): P
       const top = validVideos.slice(0, Math.min(3, validVideos.length));
       const selected = top[Math.floor(Math.random() * top.length)];
 
-      return `https://www.youtube.com/watch?v=${selected.id}`;
+      const yurl = `https://www.youtube.com/watch?v=${selected.id}`;
+
+      youtubeCache.set(cacheKey, {
+        value: yurl,
+        expiry: Date.now() + CACHE_TTL,
+      });
+
+      return yurl;
     }
 
     if (retryCount < variants.length - 1) {
       return searchYouTubeRecipe(recipeName, retryCount + 1);
     }
+    const fallback = `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
 
-    return `https://www.youtube.com/results?search_query=${encodeURIComponent(recipeName + " recipe")}`;
+    youtubeCache.set(cacheKey, {
+      value: fallback,
+      expiry: Date.now() + CACHE_TTL,
+    });
+
+    return fallback;
   } catch (error: any) {
     return null
   }
