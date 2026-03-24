@@ -1,4 +1,6 @@
 import axios from 'axios';
+const blogCache = new Map<string, string | null>();
+const youtubeCache = new Map<string, string | null>();
 
 const culturalSiteMap: Record<string, string[]> = {
   indian: [
@@ -95,27 +97,24 @@ const siteSearchMap: Record<string, string> = {
   "hebbarskitchen.com": "https://hebbarskitchen.com/?s="
   
 };
-function resolveCuisine(recipeName: string, culture: string = ""): string {
+function resolveCuisine(recipeName: string, culture: string): string {
   const dish = recipeName.toLowerCase();
   const userCulture = culture?.toLowerCase() || "";
 
-  // 🍝 Italian
-  if (dish.match(/pasta|risotto|lasagna|pizza|alfredo|carbonara/)) return "italian";
+  // 🧠 Strong dish signals
+  if (dish.match(/pasta|risotto|lasagna|pizza/)) return "italian";
+  if (dish.match(/taco|burrito|quesadilla|enchilada/)) return "mexican";
+  if (dish.match(/noodles|fried rice|dumpling|manchurian|stir fry/)) return "chinese";
+  if (dish.match(/curry|dal|roti|paneer|biryani|masala/)) return "indian";
 
-  // 🌮 Mexican
-  if (dish.match(/taco|burrito|quesadilla|enchilada|guacamole/)) return "mexican";
+  // 🧠 Hybrid logic (NEW)
+  if (userCulture.includes("indian")) {
+    if (dish.includes("noodles") || dish.includes("fried rice")) return "chinese";
+    return "indian";
+  }
 
-  // 🥡 Chinese
-  if (dish.match(/noodles|fried rice|dumpling|manchurian|spring roll/)) return "chinese";
-
-  // 🍛 Indian
-  if (dish.match(/curry|dal|roti|paneer|biryani|masala|sabzi/)) return "indian";
-
-  // 🌏 fallback: user culture
-  if (userCulture.includes("indian")) return "indian";
-  if (userCulture.includes("italian")) return "italian";
-  if (userCulture.includes("mexican")) return "mexican";
-  if (userCulture.includes("chinese")) return "chinese";
+  // fallback
+  if (userCulture) return userCulture;
 
   return "western";
 }
@@ -126,7 +125,9 @@ function normalizeCuisine(recipeName: string, culture: string = ""): string {
   if (c.includes("italian")) return "italian";
   if (c.includes("mexican")) return "mexican";
   if (c.includes("chinese")) return "chinese";
-  if (c.includes("any cuisine")) return "western";
+  if (c.includes("any") || c.includes("any cuisine")) {
+    return resolveCuisine(recipeName, culture);
+  }
   return "western"; // fallback
 }
 export function generateSiteSearchLinks(query: string, culture: string): string | null {
@@ -167,6 +168,13 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
   const currentQuery = variants[Math.min(retryCount, variants.length - 1)];
   const cuisine = normalizeCuisine(recipeName, culture);
   const popularCookingSites = culturalSiteMap[cuisine] || culturalSiteMap["indian"];
+
+  const cacheKey = `${recipeName.toLowerCase()}-${culture.toLowerCase()}`;
+
+  // ✅ 1. Check cache FIRST
+  if (blogCache.has(cacheKey)) {
+    return blogCache.get(cacheKey)!;
+  }
   
   // Fallback: a Google search scoped to popular cooking sites
   const fallbackUrl = `https://www.google.com/search?q=${encodeURIComponent(
@@ -309,8 +317,11 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
       }
       const randomDomain = domains[Math.floor(Math.random() * domains.length)];
       const linksFromDomain = grouped[randomDomain];
+      const result = linksFromDomain[Math.floor(Math.random() * linksFromDomain.length)];
+      // ✅ Before returning final result:
+      blogCache.set(cacheKey, result);
+      return result
 
-      return linksFromDomain[Math.floor(Math.random() * linksFromDomain.length)];
     }
 
     // 🔁 RETRY LOGIC
