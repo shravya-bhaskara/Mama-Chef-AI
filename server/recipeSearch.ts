@@ -203,7 +203,8 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
         snippet.includes("no results") ||
         snippet.includes("not found") ||
         snippet.includes("0 results") ||
-        snippet.includes("did not match")
+        snippet.includes("did not match") ||
+        snippet.includes("can't find")
       ) {
         return false;
       }
@@ -233,7 +234,8 @@ export async function searchCookingBlog(recipeName: string, culture: string, ret
         !snippet.includes("no results") &&
         !snippet.includes("not found") &&
         !snippet.includes("0 results") &&
-        !snippet.includes("did not match")
+        !snippet.includes("did not match") &&
+        !snippet.includes("can't find")
       ) {
         return true;
       }
