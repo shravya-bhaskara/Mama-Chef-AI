@@ -120,7 +120,7 @@ Seed: ${seed}
         generatedData.suggestions.map(async (suggestion: any) => {
           const [videoUrl, searchUrl, blogUrl] = await Promise.all([
             searchYouTubeRecipe(suggestion.recipeSearchQuery),
-            searchCookingBlog(suggestion.recipeSearchQuery, culture),
+            searchCookingBlog(suggestion.recipeSearchQuery || suggestion.name,culture)
             generateSiteSearchLinks(suggestion.recipeSearchQuery, culture),
           ]);
           let recipeUrl: string | null = null;
