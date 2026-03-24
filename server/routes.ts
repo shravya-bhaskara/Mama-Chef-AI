@@ -549,7 +549,7 @@ Seed: ${seed}
       }
 
       const input = api.festivalRecipes.create.input.parse(req.body);
-      
+      const culture = input.culture || "indian";
       const fastingFilter = (input as any).fastingType || 'both';
       const mealTypeFilter = (input as any).mealType || 'all';
       const seed = Math.random();
@@ -630,7 +630,6 @@ Seed: ${seed}
       }
 
       const generatedRecipes = JSON.parse(responseContent);
-      const culture = input.preferences.culture || "indian";
       // Fetch YouTube and blog links for each festival recipe
       const recipesWithLinks = await Promise.all(
         (generatedRecipes.festivalRecipes || []).map(async (recipe: any) => {
