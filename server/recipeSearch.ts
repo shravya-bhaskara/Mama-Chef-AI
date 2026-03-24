@@ -10,6 +10,8 @@ const culturalSiteMap: Record<string, string[]> = {
     "archanaskitchen.com",
     "manjulaskitchen.com",
     "ministryofcurry.com",
+    "vegrecipesofindia.com",
+    "hebbarskitchen.com",
     "mallikabasu.com"
   ],
 
@@ -88,7 +90,10 @@ const siteSearchMap: Record<string, string> = {
   "theitaliandishblog.com": "https://www.theitaliandishblog.com/search?q=",
   "archanaskitchen.com": "https://www.archanaskitchen.com/search?q=",
   "madewithlau.com": "https://www.madewithlau.com/recipes/",
-  "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q="
+  "insidetherustickitchen.com": "https://www.insidetherustickitchen.com/#search/q=",
+  "vegrecipesofindia.com": "https://www.vegrecipesofindia.com/#search/q=",
+  "hebbarskitchen.com": "https://hebbarskitchen.com/?s=",
+  
 };
 function resolveCuisine(recipeName: string, culture: string = ""): string {
   const dish = recipeName.toLowerCase();
